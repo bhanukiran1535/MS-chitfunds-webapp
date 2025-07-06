@@ -3,47 +3,13 @@ const groupRoute = express.Router();
 const userAuth = require('../middlewares/userAuth');
 const adminAuth = require('../middlewares/adminAuth');
 const Group = require('../Models/Group');
-const GenerateMonths = require('../Utils/GenerateMonths');
+const generateMonths = require('../Utils/GenerateMonths');
 const Month = require('../Models/MonthDetails');
 
 groupRoute.post('/create',userAuth,adminAuth, async (req,res)=>{
    try{
     const info = await Group.create(req.body);
     res.status(200).json({success:true,groupDetails:info});
-   }catch(err){
-    res.status(400).json({success:false,message:err.message});
-   }
-})
-
-groupRoute.get('/:id', async (req, res) => {
-  try {
-    const group = await Group.findById(req.params.id).populate('members', 'firstName email');
-    if (!group) {
-      return res.status(404).json({ success: false, message: "Group not found" });
-    }
-    res.status(200).json({ success: true, group });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-
-groupRoute.patch('/join/:groupid',userAuth, async (req,res)=>{
-   try{
-    const grpId = req.params.groupid;
-    const grp = await Group.findById(grpId);
-    if(!grp){
-      return res.status(404).json({success:false,message:"Group not found"});
-    }
-    const Id = req.user._id;
-    if(grp.members.includes(Id)){
-      return res.status(404).json({success:false,message:"You already joined the Group"});
-    }
-    const monthsArray = GenerateMonths(grp.startMonth, grp.tenure);
-    await Month.insertMany(monthsArray);
-    grp.members.push(Id);
-    await grp.save();
-    res.status(200).json({success:true,groupDetails:grp});
    }catch(err){
     res.status(400).json({success:false,message:err.message});
    }
@@ -59,6 +25,38 @@ groupRoute.get('/myGroups', userAuth, async (req, res) => {
   }
 });
 
+groupRoute.get('/:id', async (req, res) => {
+  try {
+    const group = await Group.findById(req.params.id).populate('members', 'firstName email');
+    if (!group) {
+      return res.status(404).json({ success: false, message: "Group not found" });
+    }
+    res.status(200).json({ success: true, group });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+groupRoute.patch('/join/:groupid',userAuth, async (req,res)=>{
+   try{
+    const grpId = req.params.groupid;
+    const grp = await Group.findById(grpId);
+    if(!grp){
+      return res.status(404).json({success:false,message:"Group not found"});
+    }
+    const Id = req.user._id;
+    if(grp.members.includes(Id)){
+      return res.status(404).json({success:false,message:"You already joined the Group"});
+    }
+    const monthsArray = generateMonths(grp.startMonth, grp.tenure, grp._id, req.user._id);
+    await Month.insertMany(monthsArray);
+    grp.members.push(Id);
+    await grp.save();
+    res.status(200).json({success:true,groupDetails:grp});
+   }catch(err){
+    res.status(400).json({success:false,message:err.message});
+   }
+})
 
 groupRoute.patch('/leave/:groupid', userAuth, async (req, res) => {
   try {

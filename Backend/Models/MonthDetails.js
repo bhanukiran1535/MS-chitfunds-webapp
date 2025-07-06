@@ -12,21 +12,25 @@ const MonthSchema = new mongoose.Schema({
     required: true
   },
   monthName: {
-    type: String, // like "June 2025"
+    type: String, // e.g., "June 2025"
     required: true
   },
-  paid: {
-    type: Boolean,
-    default: false
+  monthKey: {
+    type: String, // e.g., "2025-06"
+    required: true
   },
-  paymentDate: Date,
-  paymentAmount: Number,
   status: {
     type: String,
-    enum: ['upcoming', 'due', 'paid'],
+    enum: ['upcoming', 'due', 'paid', 'pending'],
     default: 'upcoming'
+  },
+  paymentAmount: {
+    type: Number,
+    default: 0
+  },
+  paymentDate: {
+    type: Date
   }
 }, { timestamps: true });
 
-const MonthModel = mongoose.model('Month', MonthSchema);
-module.exports = MonthModel;
+module.exports = mongoose.model('Month', MonthSchema);
