@@ -24,11 +24,14 @@ const MonthSchema = new mongoose.Schema({
     enum: ['upcoming', 'due', 'paid', 'pending'],
     default: 'upcoming'
   },
-  paymentAmount: {
+  dueAmount:{
     type: Number,
     default: 0
   },
-  paymentDate: {
+  paymentMethod: {
+    type: String
+  },
+  paymentDate: { 
     type: Date
   }
 }, { timestamps: true });

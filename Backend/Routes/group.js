@@ -15,6 +15,33 @@ groupRoute.post('/create',userAuth,adminAuth, async (req,res)=>{
    }
 })
 
+// GET /allGroups?status=upcoming|active|completed
+groupRoute.get('/allGroups', async (req, res) => {
+  try {
+    const { status } = req.query;
+    const currentDate = new Date();
+
+    const allGroups = await Group.find().select('-__v -updatedAt -createdAt -members -foremanCommission');
+
+    // Compute group status dynamically
+    const filteredGroups = allGroups.filter(group => {
+      const groupStart = new Date(group.startMonth);
+      const groupEnd = new Date(groupStart);
+      groupEnd.setMonth(groupEnd.getMonth() + group.tenure);
+
+      if (status === 'upcoming') return groupStart > currentDate;
+      if (status === 'active') return groupStart <= currentDate && groupEnd >= currentDate;
+      if (status === 'completed') return groupEnd < currentDate;
+      return true; // if no status given, return all
+    });
+
+    res.status(200).json({ success: true, groups: filteredGroups });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+
 groupRoute.get('/myGroups', userAuth, async (req, res) => {
   try {
     const userId = req.user._id;

@@ -3,6 +3,7 @@ const express = require('express');
 const ConnectDB = require("./config/mongoose");
 const userRoute = require('./Routes/user');
 const groupRoute = require('./Routes/group')
+const monthRoute = require('./Routes/month')
 const cookieParser = require('cookie-parser');
 
 let app = express();
@@ -11,4 +12,5 @@ app.use(cookieParser());
 ConnectDB();
 app.use('/user',userRoute);
 app.use('/group',groupRoute);
+app.use('/month', monthRoute);
 app.listen(3000);
