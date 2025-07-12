@@ -1,4 +1,8 @@
-function generateMonths(startDate, tenure, groupId, userId) {
+const Group = require('../Models/Group');
+const Month = require('../Models/MonthDetails');
+
+
+function generateMonths(startDate, tenure, groupId, userId,shareAmount) {
   const months = [];
   const start = new Date(startDate);
   const today = new Date();
@@ -6,12 +10,12 @@ function generateMonths(startDate, tenure, groupId, userId) {
   if (isNaN(start)) {
     throw new Error("Invalid start date passed to generateMonths");
   }
+  const monthlyDue = Math.round(shareAmount / tenure); // 💰 Even split
 
   for (let i = 0; i < tenure; i++) {
     const date = new Date(start.getFullYear(), start.getMonth() + i, 1); // 1st of each month
     const monthName = date.toLocaleString('default', { month: 'long' });
-    const year = date.getFullYear();
-    const monthKey = `${year}-${String(date.getMonth() + 1).padStart(2, '0')}`; // e.g., 2024-07
+    const year = date.getFullYear(); // e.g., 2024-07
 
     let status;
     if (
@@ -32,13 +36,30 @@ function generateMonths(startDate, tenure, groupId, userId) {
       groupId,
       userId,
       monthName: `${monthName} ${year}`,
-      monthKey,
       status,
-      paymentAmount: 0,
+      monthDue: monthlyDue, // ✅ Use dueAmount field properly
     });
   }
 
   return months;
 }
 
-module.exports = generateMonths;
+const addMemberToGroup = async (group, userId, amount) => {
+  // Add to members
+  try{
+  group.members.push({
+    userId,
+    shareAmount: amount
+  });
+  await group.save();
+
+  // Add payment records
+const monthEntries = generateMonths(group.startMonth, group.tenure, group._id, userId, amount);
+await Month.insertMany(monthEntries);
+  return { success: true, message: 'Member added and payments generated' };
+}catch(err){
+  return { success: false, message: err.message};
+}
+};
+
+module.exports = { addMemberToGroup };

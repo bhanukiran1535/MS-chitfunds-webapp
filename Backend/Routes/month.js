@@ -3,19 +3,25 @@ const monthRoute = express.Router();
 const Month = require('../Models/MonthDetails');
 const userAuth = require('../middlewares/userAuth');
 
-// GET /group/:id/months → Fetch user's monthly status for a group
-monthRoute.get('/:grpid/months', userAuth, async (req, res) => {
+// POST /month/my
+monthRoute.post('/my', userAuth, async (req, res) => {
+  const { groupIds } = req.body;
+  const userId = req.user._id;
+
+  if (!Array.isArray(groupIds) || groupIds.length === 0) {
+    return res.status(400).json({ success: false, message: 'Group IDs are required' });
+  }
+ 
   try {
-    const groupId = req.params.grpid;
-    const userId = req.user._id;
+    const months = await Month.find({
+      userId,
+      groupId: { $in: groupIds }
+    }).select('-__v -createdAt -updatedAt') // 1 = ascending, -1 = descending
 
-    const months = await Month.find({ groupId, userId })
-      .sort({ monthKey: 1 })  // Sort chronologically
-      .select('-__v -groupId -userId');
-
-    res.status(200).json({ success: true, months });
+    res.json({ success: true, months });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Error fetching month data:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch month records' });
   }
 });
 

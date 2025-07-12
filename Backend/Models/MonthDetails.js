@@ -15,16 +15,12 @@ const MonthSchema = new mongoose.Schema({
     type: String, // e.g., "June 2025"
     required: true
   },
-  monthKey: {
-    type: String, // e.g., "2025-06"
-    required: true
-  },
   status: {
     type: String,
     enum: ['upcoming', 'due', 'paid', 'pending'],
     default: 'upcoming'
   },
-  dueAmount:{
+  monthDue:{
     type: Number,
     default: 0
   },

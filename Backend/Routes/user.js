@@ -3,6 +3,8 @@ const express = require('express');
 const userRoute = express.Router();
 const User = require("../Models/User");
 const userAuth = require('../middlewares/userAuth');
+const adminAuth = require('../middlewares/adminAuth');
+
 
 userRoute.post('/create', async (req, res) => {
   try {
@@ -18,23 +20,50 @@ userRoute.post('/create', async (req, res) => {
   }
 });
 
-userRoute.post('/login',async (req,res)=>{
-  try{
-    const {password,email} = req.body;
-    const user = await User.findOne({email});
+userRoute.get('/me', userAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        isAdmin: user.isAdmin
+      }
+    });
+  } catch (err) {
+    res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+});
+
+
+userRoute.post('/login', async (req, res) => {
+  try {
+    const { password, email } = req.body;
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
     const isMatch = await user.compareHash(password);
-    if(!isMatch){
+    if (!isMatch) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
+
     const token = await user.getJWT();
-    res.cookie("token",token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 3600000 // 1 hour
+    });
+
     res.status(200).json({
       success: true,
       message: "Login successful",
-      token,
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -42,10 +71,10 @@ userRoute.post('/login',async (req,res)=>{
         isAdmin: user.isAdmin
       }
     });
-  } catch(err){
+  } catch (err) {
     res.status(400).json({ success: false, message: err.message });
-   }
-})
+  }
+});
 
 userRoute.get('/viewProfile',userAuth, async (req,res)=>{
   try{
@@ -66,17 +95,19 @@ userRoute.get('/viewProfile',userAuth, async (req,res)=>{
   }
 })
 
-userRoute.get('/logout',userAuth, async (req,res)=>{
-  try{
-    res.cookie("token", null, {
-        expires: new Date(Date.now()),
-        httpOnly: true
+userRoute.get('/logout', userAuth, async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "Strict",
+      secure: process.env.NODE_ENV === "production"
     });
     res.status(200).json({ success: true, message: "Logged out successfully" });
-  } catch(err){
+  } catch (err) {
     res.status(400).json({ success: false, message: err.message });
-   }
-})
+  }
+});
+
 
 userRoute.delete('/delete',userAuth, async (req,res)=>{
   try{
@@ -95,5 +126,27 @@ userRoute.delete('/delete',userAuth, async (req,res)=>{
     res.status(400).json({ success: false, message: err.message });
   }
 })
+
+userRoute.get('/search', userAuth, adminAuth, async (req, res) => {
+  const { query } = req.query;
+  if (!query) {
+    return res.status(400).json({ success: false, message: "Query required" });
+  }
+
+  try {
+    const users = await User.find({
+      $or: [
+        { firstName: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } },
+        { alias: { $regex: query, $options: 'i' } },
+      ]
+    }).select('_id firstName email alias');
+    
+    res.status(200).json({ success: true, users });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 
 module.exports = userRoute; // "wire it" to main Express app

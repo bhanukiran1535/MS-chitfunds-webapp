@@ -1,12 +1,82 @@
 
 const express = require('express');
-const Requestrouter = express.Router();
+const requestRoute = express.Router();
 const Request = require('../Models/Request');
 const userAuth = require('../middlewares/userAuth');
 const adminAuth = require('../middlewares/adminAuth');
+const { addMemberToGroup } =require('../Utils/addMemberToGroup');
+const Group = require('../Models/Group');
+
+// POST /request/join
+requestRoute.post('/join', userAuth, async (req, res) => {
+  try {
+    const { amount } = req.body;
+    if (!amount) {
+      return res.status(400).json({ success: false, message: 'Amount is required' });
+    }
+
+    // Check if user already has a pending join request
+    const existing = await Request.findOne({ 
+      userId: req.user._id, 
+      type: 'join_group', 
+      status: 'pending' 
+    });
+
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'You already have a pending join request' });
+    }
+
+    const request = await Request.create({
+      userId: req.user._id,
+      amount,
+      type: 'join_group'
+    });
+    res.status(201).json({ success: true, message: 'Join request submitted', request });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+requestRoute.get('/my', userAuth, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const requests = await Request.find({ userId }).sort({ createdAt: -1 });
+    res.json({ success: true, requests });
+  } catch (err) {
+    console.error('Error fetching user requests:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+requestRoute.post('/withdraw', userAuth, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { amount, type } = req.body;
+
+    const result = await Request.findOneAndDelete({
+      userId,
+      amount,
+      type,
+      status: 'pending'
+    });
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: 'No pending request found for withdrawal'
+      });
+    }
+
+    res.json({ success: true, message: 'Request withdrawn successfully' });
+  } catch (err) {
+    console.error('Error withdrawing request:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
 
 // 1. Send Prebook Request
-Requestrouter.post('/prebook', userAuth, async (req, res) => {
+requestRoute.post('/prebook', userAuth, async (req, res) => {
   try {
     const { groupId } = req.body;
     const newRequest = new Request({
@@ -22,7 +92,7 @@ Requestrouter.post('/prebook', userAuth, async (req, res) => {
 });
 
 // 2. Send Payment Confirmation Request
-Requestrouter.post('/payment', userAuth, async (req, res) => {
+requestRoute.post('/payment', userAuth, async (req, res) => {
   try {
     const { groupId, monthKey, amount } = req.body;
     const newRequest = new Request({
@@ -40,7 +110,7 @@ Requestrouter.post('/payment', userAuth, async (req, res) => {
 });
 
 // 3. Send Leave Group Request
-Requestrouter.post('/leave', userAuth, async (req, res) => {
+requestRoute.post('/leave', userAuth, async (req, res) => {
   try {
     const { groupId } = req.body;
     const newRequest = new Request({
@@ -56,38 +126,116 @@ Requestrouter.post('/leave', userAuth, async (req, res) => {
 });
 
 // 4. Admin - View All Pending Requests
-Requestrouter.get('/admin/requests', userAuth, adminAuth, async (req, res) => {
+requestRoute.get('/pending',userAuth,adminAuth, async (req, res) => {
   try {
     const requests = await Request.find({ status: 'pending' })
+      .sort({ createdAt: -1 })
       .populate('userId', 'firstName email')
       .populate('groupId', 'groupNo');
-    res.status(200).json({ success: true, requests });
+
+    const formatted = requests.map(req => ({
+      id: req._id,
+      type: req.type,
+      user: req.userId?.firstName || 'Unknown',
+      email: req.userId?.email || '',
+      groupNo: req.groupId?.groupNo || '',
+      amount: req.amount,
+      message: generateMessage(req),
+      timestamp: req.createdAt,
+      status: req.status
+    }));
+
+    res.json({ success: true, requests: formatted });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to fetch pending requests' });
   }
 });
 
-// 5. Admin - Approve Request
-Requestrouter.patch('/admin/request/:id/approve', userAuth, adminAuth, async (req, res) => {
+// Helper function to auto-generate message if none is set
+function generateMessage(req) {
+  switch (req.type) {
+    case 'join_group': return `Request to join a group (₹${req.amount?.toLocaleString() || '—'})`;
+    case 'leave_group': return 'Request to leave group';
+    case 'confirm_cash_payment': return `Cash payment confirmation for ${req.monthKey}`;
+    case 'month_prebook': return `Pre-book payout for ${req.monthKey}`;
+    default: return 'Request';
+  }
+}
+
+// ✅ 2. POST /request/approve
+requestRoute.post('/approve', userAuth, adminAuth, async (req, res) => {
+  const { requestId, groupId } = req.body;
+  if (!requestId) {
+    return res.status(400).json({ success: false, message: 'Request ID is required' });
+  }
   try {
-    const request = await Request.findByIdAndUpdate(req.params.id, { status: 'approved' }, { new: true });
-    if (!request) return res.status(404).json({ success: false, message: 'Request not found' });
-    // Future logic: add user to group, mark payment, etc.
-    res.status(200).json({ success: true, message: 'Request approved', request });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    const request = await Request.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+    if (request.status !== 'pending') {
+      return res.status(400).json({ success: false, message: 'Request already processed' });
+    }
+    // ✅ If request type is join_group, add user to group + generate dues
+    
+    if (request.type === 'join_group'){
+      if (!groupId) {
+        return res.status(400).json({ success: false, message: 'Group ID is required to approve join_group request' });
+      }
+
+      const group = await Group.findById(groupId);
+      if (!group) {
+        return res.status(404).json({ success: false, message: 'Group not found' });
+      }
+      // ✅ Add user to group.members
+      const alreadyMember = group.members.find(m => m.userId.toString() === request.userId.toString());
+      if (alreadyMember) {
+        return res.status(400).json({ success: false, message: 'User is already a member of this group' });
+      }
+        // Generate monthlydetails records
+      const result = await addMemberToGroup(group, request.userId, request.amount);
+      if(!result.success) return res.status(500).json({ success: false, message: result.message })
+    }
+    
+    // ✅ Approve the request
+    request.status = 'approved';
+    await request.save();
+
+    res.json({ success: true, message: 'Request approved and user added to group' });
+  }catch (err) {
+    console.error('Approval error:', err);
+    res.status(500).json({ success: false, message: 'Failed to approve request' });
   }
 });
 
-// 6. Admin - Reject Request
-Requestrouter.patch('/admin/request/:id/reject', userAuth, adminAuth, async (req, res) => {
+
+// ✅ 3. POST /request/reject
+requestRoute.post('/reject',userAuth,adminAuth, async (req, res) => {
+  const { requestId } = req.body;
+
+  if (!requestId) {
+    return res.status(400).json({ success: false, message: 'Request ID is required' });
+  }
+
   try {
-    const request = await Request.findByIdAndUpdate(req.params.id, { status: 'rejected' }, { new: true });
-    if (!request) return res.status(404).json({ success: false, message: 'Request not found' });
-    res.status(200).json({ success: true, message: 'Request rejected', request });
+    const request = await Request.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({ success: false, message: 'Request already processed' });
+    }
+
+    request.status = 'rejected';
+    await request.save();
+
+    res.json({ success: true, message: 'Request rejected' });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to reject request' });
   }
 });
 
-module.exports = Requestrouter;
+module.exports = requestRoute;
