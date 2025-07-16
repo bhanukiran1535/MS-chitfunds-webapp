@@ -5,11 +5,11 @@ import './AdminRequests.css';
 export const AdminRequests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-// State to hold active+upcoming groups
-const [groupList, setGroupList] = useState([]);
+  // State to hold active+upcoming groups
+  const [groupList, setGroupList] = useState([]);
 
-// For tracking selected groupId per request
-const [selectedGroups, setSelectedGroups] = useState({});
+  // For tracking selected groupId per request
+  const [selectedGroups, setSelectedGroups] = useState({});
 
   const fetchPendingRequests = async () => {
     try {
@@ -28,6 +28,7 @@ const [selectedGroups, setSelectedGroups] = useState({});
       setLoading(false);
     }
   };
+  
   const fetchGroups = async () => {
     const statuses = ['active', 'upcoming'];
     const results = await Promise.all(
@@ -44,14 +45,16 @@ const [selectedGroups, setSelectedGroups] = useState({});
   useEffect(() => {
     fetchPendingRequests();
   }, []);
+  
   useEffect(() => {
     fetchGroups();
   }, []);
+
   const getTypeIcon = (type) => {
     switch (type) {
       case 'join_group': return <Users className="type-icon blue" />;
       case 'payment_confirmation': return <DollarSign className="type-icon green" />;
-      case 'payout_booking': return <Calendar className="type-icon purple" />;
+      case 'month_prebook': return <Calendar className="type-icon purple" />;
       case 'leave_group': return <XCircle className="type-icon red" />;
       default: return <Clock className="type-icon gray" />;
     }
@@ -61,7 +64,7 @@ const [selectedGroups, setSelectedGroups] = useState({});
     const typeMap = {
       'join_group': 'Join Group',
       'payment_confirmation': 'Payment',
-      'payout_booking': 'Payout Booking',
+      'month_prebook': 'Payout Booking',
       'leave_group': 'Leave Group'
     };
     
@@ -71,37 +74,40 @@ const [selectedGroups, setSelectedGroups] = useState({});
     return <span className={typeClass}>{typeText}</span>;
   };
 
-    const handleApprove = async (requestId, type) => {
-      const payload = { requestId };
-
-      if (type === 'join_group') {
-        const groupId = selectedGroups[requestId];
-        if (!groupId) {
-          return alert('Please select a group before approving.');
-        }
-        payload.groupId = groupId;
+  const handleApprove = async (requestId, type, groupId) => {
+    const payload = { requestId };
+    if (type === 'join_group') {
+      const seclectedgroupId = selectedGroups[requestId];
+      if (!seclectedgroupId) {
+        return alert('Please select a group before approving.');
       }
-
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/request/approve`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        if (data.success) {
-          setRequests(prev => prev.filter(r => r.id !== requestId));
-          alert('Request approved.');
-        } else {
-          alert(data.message || 'Failed to approve request.');
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Error approving request.');
+      payload.seclectedgroupId = seclectedgroupId;
+    }
+    if (type === 'month_prebook') {
+      if (!groupId) {
+        return alert('month is not specified');
       }
-    };
-
+      payload.groupId = groupId;
+    }
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/request/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRequests(prev => prev.filter(r => r.id !== requestId));
+        alert('Request approved.');
+      } else {
+        alert(data.message || 'Failed to approve request.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error approving request.');
+    }
+  };
 
   const handleReject = async (requestId) => {
     try {
@@ -197,7 +203,7 @@ const [selectedGroups, setSelectedGroups] = useState({});
                             ))}
                           </select>
                         ) : (
-                          request.groupNo || "—"
+                          request.groupId?.groupNo || "—"
                         )}
                       </td>
                       <td>
@@ -217,7 +223,7 @@ const [selectedGroups, setSelectedGroups] = useState({});
                         <div className="actions-cell">
                           <button
                             className="action-btn approve"
-                            onClick={() => handleApprove(request.id,request.type)}
+                            onClick={() => handleApprove(request.id,request.type,request.groupId)}
                           >
                             <CheckCircle className="btn-icon" />
                             Approve

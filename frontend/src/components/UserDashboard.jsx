@@ -8,67 +8,43 @@ import './UserDashboard.css';
 
 export const UserDashboard = ({ user }) => {
   const [activeTab, setActiveTab] = useState('groups');
-  const [stats] = useState({
-    activeGroups: 2,
-    totalPaid: 25000,
-    upcomingPayments: 3,
-    pendingRequests: 1
+  const [stats, setStats] = useState({
+    activeGroups: 0,
+    totalPaid: 0,
+    upcomingPayments: 0,
+    pendingRequests: 0
   });
 
-  //   const [groups] = useState([  // Placeholder: Replace with real joined groups later
-  //   {
-  //     id: '1',
-  //     groupNo: 'G001',
-  //     chitValue: 100000,
-  //     tenure: 20,
-  //     startMonth: 'January 2024',
-  //     currentMonth: 3,
-  //     status: 'active',
-  //     nextPaymentDue: '2024-03-15',
-  //     myPaymentStatus: 'due'
-  //   },
-  //   {
-  //     id: '2',
-  //     groupNo: 'G002',
-  //     chitValue: 50000,
-  //     tenure: 10,
-  //     startMonth: 'March 2024',
-  //     currentMonth: 1,
-  //     status: 'active',
-  //     nextPaymentDue: '2024-03-20',
-  //     myPaymentStatus: 'paid'
-  //   }
-  // ]);
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
   const [groups, setGroups] = useState([]);
   const [monthRecords, setMonthRecords] = useState([]);
   const [mergedGroups, setMergedGroups] = useState([]);
-useEffect(() => {
-  const fetchMyGroups = async () => {
-    const res = await fetch(`${API_BASE}/group/my`, {
-      credentials: 'include'
-    });
-    const data = await res.json();
 
-    if (data.success) {
-      const groupsWithShare = data.groups.map(group => {
-        const userInfo = group.members?.[0] || {};
-        return {
-          ...group,
-          shareAmount: userInfo.shareAmount || 0,
-          hasPrebooked: userInfo.hasPrebooked || false,
-          preBookedMonth: userInfo.preBookedMonth || null,
-          extraMonthlyPayment: userInfo.extraMonthlyPayment || 0
-        };
+  useEffect(() => {
+    const fetchMyGroups = async () => {
+      const res = await fetch(`${API_BASE}/group/my`, {
+        credentials: 'include'
       });
+      const data = await res.json();
 
-      setGroups(groupsWithShare);
-    }
-  };
+      if (data.success) {
+        const groupsWithShare = data.groups.map(group => {
+          const userInfo = group.members?.[0] || {};
+          return {
+            ...group,
+            shareAmount: userInfo.shareAmount || 0,
+            hasPrebooked: userInfo.hasPrebooked || false,
+            preBookedMonth: userInfo.preBookedMonth || null,
+            extraMonthlyPayment: userInfo.extraMonthlyPayment || 0
+          };
+        });
 
-  fetchMyGroups();
-}, []);
+        setGroups(groupsWithShare);
+      }
+    };
 
+    fetchMyGroups();
+  }, []);
 
   useEffect(() => {
     const fetchMonthData = async () => {
@@ -86,49 +62,63 @@ useEffect(() => {
     if (groups.length > 0) fetchMonthData();
   }, [groups]);
 
-useEffect(() => {
-  const now = new Date();
-  const computedGroups = groups.map(group => {
-    const start = new Date(group.startMonth);
-    const groupMonths = monthRecords.filter(m => m.groupId === group._id);
+  useEffect(() => {
+    const now = new Date();
+    const computedGroups = groups.map(group => {
+      const start = new Date(group.startMonth);
+      const groupMonths = monthRecords.filter(m => m.groupId === group._id);
 
-    const monthsPassed = now.getFullYear() * 12 + now.getMonth();
-    const startMonthValue = start.getFullYear() * 12 + start.getMonth();
-    const currentMonth = monthsPassed - startMonthValue + 1;
-    
-    let myPaymentStatus = 'upcoming';
-    if (currentMonth > 0) {
-      const pastMonths = groupMonths.filter(m => {
-        const [monthName, year] = m.monthName.split(' ');
-        const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth();
-        const monthValue = parseInt(year) * 12 + monthIndex;
-        return monthValue <= monthsPassed;
-      });
+      const monthsPassed = now.getFullYear() * 12 + now.getMonth();
+      const startMonthValue = start.getFullYear() * 12 + start.getMonth();
+      const currentMonth = monthsPassed - startMonthValue + 1;
       
-      if (pastMonths.some(m => m.status === 'due')) {
-        myPaymentStatus = 'due';
-      } else if (pastMonths.some(m => m.status === 'pending')) {
-        myPaymentStatus = 'pending';
-      } else {
-        myPaymentStatus = 'paid';
+      let myPaymentStatus = 'upcoming';
+      if (currentMonth > 0) {
+        const pastMonths = groupMonths.filter(m => {
+          const [monthName, year] = m.monthName.split(' ');
+          const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth();
+          const monthValue = parseInt(year) * 12 + monthIndex;
+          return monthValue <= monthsPassed;
+        });
+        
+        if (pastMonths.some(m => m.status === 'due')) {
+          myPaymentStatus = 'due';
+        } else if (pastMonths.some(m => m.status === 'pending')) {
+          myPaymentStatus = 'pending';
+        } else {
+          myPaymentStatus = 'paid';
+        }
       }
-    }
-    
-    const nextDue = groupMonths.find(
-      m => m.status === 'due' || m.status === 'pending'
-    )?.monthName;
-    
-    return {
-      ...group,
-      currentMonth: currentMonth > 0 ? currentMonth : 0,
-      myPaymentStatus,
-      nextPaymentDue: nextDue || null,
-    };
-  });
+      
+      const nextDue = groupMonths.find(
+        m => m.status === 'due' || m.status === 'pending'
+      )?.monthName;
+      
+      return {
+        ...group,
+        currentMonth: currentMonth > 0 ? currentMonth : 0,
+        myPaymentStatus,
+        nextPaymentDue: nextDue || null,
+      };
+    });
 
-  setMergedGroups(computedGroups);
-}, [monthRecords]);
-
+    setMergedGroups(computedGroups);
+    
+    // Calculate real-time stats
+    const activeGroups = computedGroups.filter(g => g.status === 'active').length;
+    const totalPaid = monthRecords
+      .filter(m => m.status === 'paid')
+      .reduce((sum, m) => sum + (m.amount || 0), 0);
+    const upcomingPayments = monthRecords
+      .filter(m => m.status === 'due' || m.status === 'pending').length;
+    
+    setStats({
+      activeGroups,
+      totalPaid,
+      upcomingPayments,
+      pendingRequests: 0 // This would need API call to get pending join requests
+    });
+  }, [monthRecords]);
 
   return (
     <div className="dashboard">
@@ -139,7 +129,7 @@ useEffect(() => {
         </p>
       </div>
       
-    <ChitValueBanner/>
+      <ChitValueBanner/>
 
       <div className="stats-grid">
         <div className="stat-card">
@@ -199,7 +189,7 @@ useEffect(() => {
           </button>
         </div>
 
-         <div className="tab-content">
+        <div className="tab-content">
           {activeTab === "groups" && (
             <div className="groups-grid">
               {mergedGroups.map((group) => (
