@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, CreditCard, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Calendar, CreditCard, Clock, CheckCircle, AlertCircle, TrendingUp, X } from 'lucide-react';
+import { Progress } from './ui/progress';
 import './GroupMonthDetails.css';
 
-export const GroupMonthDetails = () => {
+export const GroupMonthDetails = ({ group: propGroup, onClose, adminMode = false, userId }) => {
   const [months, setMonths] = useState([]);
   const [groupInfo, setGroupInfo] = useState(null);
   const [shareAmount, setShareAmount] = useState(0);
@@ -163,10 +164,42 @@ export const GroupMonthDetails = () => {
   const split = shareAmount / groupInfo.tenure;
   const handleBack = () => nav(-1);
  
+  const completedPayments = months.filter(m => m.status === 'paid').length;
+  const totalMonths = months.length;
+  const progressPercentage = totalMonths > 0 ? (completedPayments / totalMonths) * 100 : 0;
+
   return (
     <div className="month-details-page">
-      <button className="back-btn" onClick={handleBack}>← Group List</button>
+      <div className="page-header">
+        <button className="back-btn" onClick={onClose || handleBack}>
+          ← {onClose ? 'Back' : 'Group List'}
+        </button>
+        {onClose && (
+          <button className="close-btn" onClick={onClose}>
+            <X size={20} />
+          </button>
+        )}
+      </div>
       <h1>Group {groupInfo.groupNo}: Monthly Breakdown</h1>
+      
+      {/* Progress Section */}
+      <div className="progress-section">
+        <div className="progress-header">
+          <div className="progress-stats">
+            <TrendingUp className="progress-icon" />
+            <span className="progress-text">
+              {completedPayments} of {totalMonths} payments completed
+            </span>
+          </div>
+          <span className="progress-percentage">{Math.round(progressPercentage)}%</span>
+        </div>
+        <Progress value={progressPercentage} className="progress-bar" />
+        <div className="progress-details">
+          <span>Total Amount: ₹{shareAmount.toLocaleString()}</span>
+          <span>Monthly Share: ₹{split.toLocaleString()}</span>
+        </div>
+      </div>
+
       <div className="timeline-container">
         <div className="timeline-bar" />
         {months.map((m, i) => {
@@ -177,9 +210,12 @@ export const GroupMonthDetails = () => {
           const prebookStatus = prebookStatuses[m.monthName];
           const canPay = m.status === 'due' || m.status === 'pending';
 
+          // Check if this month is the user's prebooked and approved month
+          const isMyPrebookedMonth = hasPreBookedMonth === m.monthName && prebookStatus === 'approved';
+
           return (
-            <div key={i} className="month-item">
-              <div className={`timeline-ball ${m.status}`}>
+            <div key={i} className={`month-item ${isMyPrebookedMonth ? 'prebooked-winner' : ''}`}>
+              <div className={`timeline-ball ${m.status} ${isMyPrebookedMonth ? 'prebooked' : ''}`}>
                 {m.status === 'paid' && <CheckCircle size={12} className="status-icon" />}
                 {m.status === 'due' && <AlertCircle size={12} className="status-icon" />}
                 {m.status === 'pending' && <Clock size={12} className="status-icon" />}
@@ -191,6 +227,9 @@ export const GroupMonthDetails = () => {
                   <div className="month-title">
                     <h3>{m.monthName}</h3>
                     <span className={`badge ${m.status}`}>{m.status}</span>
+                    {isMyPrebookedMonth && (
+                      <span className="prebook-winner-badge">🎯 You Win This Month!</span>
+                    )}
                   </div>
 
                   <div className="month-actions">
