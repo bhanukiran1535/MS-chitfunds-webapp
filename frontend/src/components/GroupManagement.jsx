@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, Settings, Eye, Plus } from 'lucide-react';
 import { GroupDetailsView } from './GroupDetailsView';
-import { GroupMonthManagement } from './GroupMonthManagement';
 import './GroupManagement.css';
+import { apiFetch } from '../lib/api';
 
 export const GroupManagement = () => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [managingGroup, setManagingGroup] = useState(null);
+  const navigate = useNavigate();
 
 
   const parseStartMonth = (startMonth) => {
@@ -22,21 +23,18 @@ export const GroupManagement = () => {
 
 
 const fetchGroups = async () => {
+  setLoading(true);
   try {
     const statuses = ['active', 'upcoming'];
-
     const responses = await Promise.all(
       statuses.map(status =>
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/group/allGroups?status=${status}`, {
-          credentials: 'include',
-        }).then(res => res.json())
+        apiFetch(`${import.meta.env.VITE_API_BASE_URL}/group/allGroups?status=${status}`, { showToast: false })
       )
     );
-
     const allGroups = responses.flatMap(r => (r.success ? r.groups : []));
     setGroups(allGroups);
   } catch (err) {
-    console.error('Failed to fetch groups:', err);
+    setGroups([]);
   } finally {
     setLoading(false);
   }
@@ -46,11 +44,28 @@ const fetchGroups = async () => {
     fetchGroups();
   }, []);
 
+function calculateCurrentMonth(startDateISO) {
+  const startDate = new Date(startDateISO);
+  if (isNaN(startDate)) return 0;
+
+  const now = new Date();
+
+  const monthsPassed =
+    (now.getFullYear() - startDate.getFullYear()) * 12 +
+    (now.getMonth() - startDate.getMonth()) + 1;
+
+  return monthsPassed > 0 ? monthsPassed : 0;
+}
+
+
   const getStatusBadge = (status) =>{
     const statusClass = `status-badge status-${status}`;
     const statusText = status.charAt(0).toUpperCase() + status.slice(1);
     return <span className={statusClass}>{statusText}</span>;
   };
+
+  if (loading) return <p>Loading groups...</p>;
+  if (groups.length === 0) return <p>No groups found.</p>;
 
   return (
     <div className="groups-card">
@@ -100,17 +115,20 @@ const fetchGroups = async () => {
                       ₹{group.chitValue.toLocaleString()}
                     </td>
                     <td>
-                      <div className="progress-cell">
-                        <div className="progress-bar">
-                          <div 
-                            className="progress-fill"   
-                            style={{ width: `${(group?.months?.length / group.tenure) * 100}%` }}
-                          ></div>
-                        </div>
-                        <span className="progress-text">
-                          {group?.months?.length}/{group.tenure}
-                        </span>
-                      </div>
+                    <div className="progress-cell">
+  <div className="progress-bar">
+    <div 
+      className="progress-fill"   
+      style={{ 
+        width: `${group.startMonth && group.tenure ? Math.min(((calculateCurrentMonth(group.startMonth)) / group.tenure) * 100, 100) : 0}%` 
+      }}
+    ></div>
+  </div>
+  <span className="progress-text">
+    {group.startMonth ? calculateCurrentMonth(group.startMonth) : 0}/{group.tenure}
+  </span>
+</div>
+
                     </td>
                     <td>
                       <div className="members-cell">
@@ -139,7 +157,7 @@ const fetchGroups = async () => {
                         </button>
                         <button 
                           className="action-btn secondary"
-                          onClick={() => setManagingGroup(group)}
+                          onClick={() => navigate(`/admin/group/${group._id}/manage`)}
                         >
                           <Settings className="btn-icon" />
                           Manage
@@ -159,14 +177,6 @@ const fetchGroups = async () => {
         <GroupDetailsView 
           group={selectedGroup} 
           onClose={() => setSelectedGroup(null)} 
-        />
-      )}
-
-      {/* Group Month Management */}
-      {managingGroup && (
-        <GroupMonthManagement 
-          group={managingGroup} 
-          onBack={() => setManagingGroup(null)} 
         />
       )}
     </div>

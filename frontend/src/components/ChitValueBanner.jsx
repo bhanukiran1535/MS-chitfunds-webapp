@@ -11,7 +11,10 @@ export const ChitValueBanner = () => {
     fetch(`${import.meta.env.VITE_API_BASE_URL}/group/status/upcoming`, {
       credentials: 'include',
     })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then(data => {
         if (data.success) {
           const upcomingGroups = data.groups;
@@ -40,56 +43,105 @@ export const ChitValueBanner = () => {
       });
   }, []);
 
+  const fetchData = async () => {
+    try {
+      const [groupsRes, requestsRes] = await Promise.all([
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/group/status/upcoming`, {
+          credentials: 'include',
+        }),
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/request/my`, {
+          credentials: 'include',
+        })
+      ]);
+
+      const [groupsData, requestsData] = await Promise.all([
+        groupsRes.json(),
+        requestsRes.json()
+      ]);
+
+      if (groupsData.success) {
+        const upcomingGroups = groupsData.groups;
+        const filtered = chitValues
+          .map(val => {
+            const group = upcomingGroups
+              .filter(g => g.chitValue >= val)
+              .sort((a, b) => new Date(a.startMonth) - new Date(b.startMonth))[0];
+
+            if (!group) return null;
+
+            return {
+              chitValue: val,
+              tenure: group.tenure,
+              startMonth: new Date(group.startMonth).toLocaleString('default', {
+                month: 'long',
+                year: 'numeric',
+              }),
+            };
+          })
+          .filter(Boolean);
+        setFilteredChits(filtered);
+      }
+
+      if (requestsData.success) {
+        const joinRequests = requestsData.requests
+          .filter(req => req.type === 'join_group' && req.status === 'pending')
+          .map(req => req.amount);
+        setMyRequests(joinRequests);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/request/my`, {
-      credentials: 'include',
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          const joinRequests = data.requests
-            .filter(req => req.type === 'join_group' && req.status === 'pending')
-            .map(req => req.amount);
-          setMyRequests(joinRequests);
-        }
-      });
+    fetchData();
   }, []);
 
   const requestToJoin = async (amount) => {
+    console.log('Request to Join clicked for amount:', amount); // Debug log
     const confirm = window.confirm(`Are you sure you want to request a ₹${amount.toLocaleString()} chit?`);
     if (!confirm) return;
-
+    try {
     const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/request/join`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ amount }),
     });
-
     const data = await res.json();
     alert(data.message || 'Request submitted.');
-
     if (data.success) {
       setMyRequests(prev => [...prev, amount]);
+      } else {
+        console.error('Join request failed:', data);
+      }
+    } catch (err) {
+      console.error('Error sending join request:', err);
+      alert('Error sending join request. See console for details.');
     }
   };
 
   const withdrawRequest = async (amount) => {
+    console.log('Withdraw Request clicked for amount:', amount); // Debug log
     const confirm = window.confirm(`Withdraw your request for ₹${amount.toLocaleString()}?`);
     if (!confirm) return;
-
+    try {
     const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/request/withdraw`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ amount, type: 'join_group' }),
     });
-
     const data = await res.json();
     alert(data.message || 'Request withdrawn.');
-
     if (data.success) {
       setMyRequests(prev => prev.filter(a => a !== amount));
+      } else {
+        console.error('Withdraw request failed:', data);
+      }
+    } catch (err) {
+      console.error('Error withdrawing request:', err);
+      alert('Error withdrawing request. See console for details.');
     }
   };
 

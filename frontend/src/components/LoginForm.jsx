@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Shield } from 'lucide-react';
+import { motion } from 'framer-motion';
 import './LoginForm.css';
+import { apiFetch } from '../lib/api';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
+import { HeroGeometric } from './ui/shape-landing-hero';
 
 export const LoginForm = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -18,6 +22,7 @@ export const LoginForm = ({ onLogin }) => {
   const [otp, setOtp] = useState('');
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   const handleSendOtp = async () => {
     if (!email) {
@@ -29,18 +34,11 @@ export const LoginForm = ({ onLogin }) => {
     setError('');
     
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/user/send-otp`, {
+      await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/user/send-otp`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-        credentials: 'include'
+        body: { email },
+        showToast: false
       });
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to send OTP');
-      }
       
       setShowOtpInput(true);
       setSuccess('OTP sent to your email. Check your inbox.');
@@ -61,18 +59,11 @@ export const LoginForm = ({ onLogin }) => {
     setError('');
     
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/user/verify-otp`, {
+      await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/user/verify-otp`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp }),
-        credentials: 'include'
+        body: { email, otp },
+        showToast: false
       });
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.message || 'Invalid OTP');
-      }
       
       setIsEmailVerified(true);
       setShowOtpInput(false);
@@ -121,19 +112,11 @@ export const LoginForm = ({ onLogin }) => {
           }
         : { email, password };
 
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`,{
+      const data = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // body: JSON.stringify(body),
-        body: JSON.stringify(body),
-        credentials: 'include'
+        body,
+        showToast: false
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || (isSignUp ? 'Registration failed' : 'Login failed'));
-      }
 
       if (isSignUp) {
         setSuccess('Account created successfully! Please sign in.');
@@ -163,13 +146,29 @@ export const LoginForm = ({ onLogin }) => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
+    <div className="login-container-modern">
+      {/* Hero Section - Left Side */}
+      <div className="hero-section">
+        <HeroGeometric 
+          badge="MS ChitFund"
+          title1="Secure Your"
+          title2="Financial Future"
+        />
+      </div>
+
+      {/* Form Section - Right Side */}
+      <div className="form-section">
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="login-card-modern"
+        >
         <div className="login-header">
           <div className="logo-container">
             <Shield className="logo-icon" />
           </div>
-          <h1 className="login-title">ChitFund Guardian</h1>
+          <h1 className="login-title">MS ChitFund</h1>
           <p className="login-subtitle">
             {isSignUp ? 'Create your account to get started' : 'Sign in to manage your chit fund groups'}
           </p>
@@ -333,8 +332,13 @@ export const LoginForm = ({ onLogin }) => {
             </div>
           )}
 
-          {error && <p className="login-error">{error}</p>}
-          {success && <p className="login-success">{success}</p>}
+          {!isSignUp && (
+            <div className="forgot-password-link" style={{ textAlign: 'right', marginTop: '0.5rem' }}>
+              <button type="button" className="link-btn" onClick={() => setShowForgotModal(true)}>
+                Forgot Password?
+              </button>
+            </div>
+          )}
 
           <button 
             type="submit" 
@@ -347,6 +351,11 @@ export const LoginForm = ({ onLogin }) => {
             }
           </button>
         </form>
+        <ForgotPasswordModal isOpen={showForgotModal} onClose={() => setShowForgotModal(false)} />
+
+        {error && <p className="login-error">{error}</p>}
+        {success && <p className="login-success">{success}</p>}
+        </motion.div>
       </div>
     </div>
   );

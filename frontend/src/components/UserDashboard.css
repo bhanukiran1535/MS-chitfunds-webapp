@@ -117,7 +117,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
 }
 
 .stat-label {
@@ -127,9 +126,10 @@
 }
 
 .stat-icon {
-  width: 1rem;
-  height: 1rem;
-  color: #9ca3af;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #6b7280;
+  stroke-width: 2;
 }
 
 .stat-value {
@@ -197,7 +197,7 @@
   transform: translateX(-50%);
   background-color: #2563eb;
   color: white;
-  padding: 0.6rem 1.2rem;
+  padding: 1.2rem;
   border-radius: 8px;
   z-index: 1000;
   font-size: 0.95rem;

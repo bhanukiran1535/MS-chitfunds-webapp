@@ -6,6 +6,7 @@ import { MemberManagement } from './MemberManagement';
 import './AdminDashboard.css';
 import { CreateGroupForm } from './CreateGroupForm';
 import { AddMemberForm } from './AddMemberForm';
+import { apiFetch } from '../lib/api';
 
 export const AdminDashboard = ({ user }) => {
   const [activeTab, setActiveTab] = useState('requests');
@@ -18,67 +19,53 @@ export const AdminDashboard = ({ user }) => {
     pendingRequests: 0,
     monthlyCollection: 0
   });
+  const [loading, setLoading] = useState(true);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const fetchAdminStats = async () => {
+      setLoading(true);
       try {
-        // Fetch all groups
-        const groupsRes = await fetch(`${API_BASE}/group/allGroups`, {
-          credentials: 'include'
-        });
-        const groupsData = await groupsRes.json();
-        
-        // Fetch all pending requests
-        const requestsRes = await fetch(`${API_BASE}/request/pending`, {
-          credentials: 'include'
-        });
-        const requestsData = await requestsRes.json();
-        
-        // Fetch payment data for this month
-        const paymentsRes = await fetch(`${API_BASE}/payment/monthly-collection`, {
-          credentials: 'include'
-        });
-        const paymentsData = await paymentsRes.json();
+        // Fetch all admin stats in parallel
+        const [groupsResponse, requestsResponse, paymentsResponse] = await Promise.allSettled([
+          apiFetch(`${API_BASE}/group/allGroups`, { showToast: false }),
+          apiFetch(`${API_BASE}/request/pending`, { showToast: false }),
+          apiFetch(`${API_BASE}/payment/monthly-collection`, { showToast: false })
+        ]);
 
-        if (groupsData.success) {
-          const totalGroups = groupsData.groups.length;
-          const totalMembers = groupsData.groups.reduce((sum, group) => 
-            sum + (group.members?.length || 0), 0);
-          
-          setStats(prev => ({
-            ...prev,
-            totalGroups,
-            totalMembers
-          }));
+        let totalGroups = 0, totalMembers = 0, pendingRequests = 0, monthlyCollection = 0;
+
+        // Process groups data
+        if (groupsResponse.status === 'fulfilled' && groupsResponse.value?.success) {
+          const groups = groupsResponse.value.groups || [];
+          totalGroups = groups.length;
+          totalMembers = groups.reduce((sum, group) => sum + (group.members?.length || 0), 0);
         }
-        
-        if (requestsData.success) {
-          const pendingRequests = requestsData.requests.filter(
-            r => r.status === 'pending'
-          ).length;
-          
-          setStats(prev => ({
-            ...prev,
-            pendingRequests
-          }));
+
+        // Process requests data  
+        if (requestsResponse.status === 'fulfilled' && requestsResponse.value?.success) {
+          const requests = requestsResponse.value.requests || [];
+          pendingRequests = requests.length; // Already filtered by backend
         }
-        
-        if (paymentsData.success) {
-          setStats(prev => ({
-            ...prev,
-            monthlyCollection: paymentsData.totalCollection || 0
-          }));
+
+        // Process payments data
+        if (paymentsResponse.status === 'fulfilled' && paymentsResponse.value?.success) {
+          monthlyCollection = paymentsResponse.value.totalCollection || 0;
         }
-        
+
+        setStats({ totalGroups, totalMembers, pendingRequests, monthlyCollection });
       } catch (error) {
-        console.error('Failed to fetch admin stats:', error);
+        console.error('Error fetching admin stats:', error);
+        setStats({ totalGroups: 0, totalMembers: 0, pendingRequests: 0, monthlyCollection: 0 });
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchAdminStats();
   }, [API_BASE]);
+
+  if (loading) return <p>Loading admin stats...</p>;
 
   return (
     <div className="admin-dashboard">

@@ -1,46 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Search, Filter, MoreHorizontal, UserCheck, UserX, DollarSign, Calendar, Download } from 'lucide-react';
-import { UserGroupsView } from './UserGroupsView';
 import './MemberManagement.css';
+import { apiFetch } from '../lib/api';
+import { useDebounce } from '../hooks/useDebounce';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export const MemberManagement = () => {
+  const navigate = useNavigate();
   const [uniqueUsers, setUniqueUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [groups, setGroups] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    filterUsers();
-  }, [uniqueUsers, searchTerm, filterStatus]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
-      // Fetch all groups
-      const groupsRes = await fetch(`${API_BASE}/group/allGroups`, {
-        credentials: 'include'
-      });
-      const groupsData = await groupsRes.json();
-
+      const groupsData = await apiFetch(`${API_BASE}/group/allGroups`, { showToast: false });
       if (groupsData.success) {
         setGroups(groupsData.groups);
-        
         // Extract unique users from all groups
         const userMap = new Map();
-        
         groupsData.groups.forEach(group => {
           if (group.members && group.members.length > 0) {
             group.members.forEach(member => {
               const userId = member.userId._id;
-              
               if (!userMap.has(userId)) {
                 userMap.set(userId, {
                   userId: member.userId,
@@ -51,7 +40,6 @@ export const MemberManagement = () => {
                   groups: []
                 });
               }
-              
               const user = userMap.get(userId);
               user.totalGroups++;
               user.totalInvestment += member.shareAmount || group.chitValue;
@@ -64,35 +52,29 @@ export const MemberManagement = () => {
                 joinDate: member.joinDate,
                 role: member.role
               });
-              
               if (group.status === 'active') user.activeGroups++;
               if (group.status === 'completed') user.completedGroups++;
             });
           }
         });
-        
         setUniqueUsers(Array.from(userMap.values()));
       }
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      // error toast handled by apiFetch
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
-  const filterUsers = () => {
+  const filteredUsers = useMemo(() => {
     let filtered = [...uniqueUsers];
-
-    // Search filter
-    if (searchTerm) {
+    if (debouncedSearchTerm) {
       filtered = filtered.filter(user =>
-        user.userId.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.userId.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.userId.email?.toLowerCase().includes(searchTerm.toLowerCase())
+        user.userId.firstName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        user.userId.lastName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        user.userId.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
       );
     }
-
-    // Status filter (based on active groups)
     if (filterStatus !== 'all') {
       filtered = filtered.filter(user => {
         if (filterStatus === 'active') return user.activeGroups > 0;
@@ -100,63 +82,31 @@ export const MemberManagement = () => {
         return true;
       });
     }
+    return filtered;
+  }, [uniqueUsers, debouncedSearchTerm, filterStatus]);
 
-    setFilteredUsers(filtered);
-  };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleMemberAction = async (memberId, action) => {
     try {
-      const response = await fetch(`${API_BASE}/group/member-action`, {
+      await apiFetch(`${API_BASE}/group/member-action`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          memberId,
-          action
-        })
+        body: { memberId, action },
       });
-
-      const data = await response.json();
-      if (data.success) {
-        // Refresh data
-        fetchData();
-        alert(`Member ${action} successfully!`);
-      } else {
-        alert(data.message || `Failed to ${action} member`);
-      }
-    } catch (error) {
-      console.error(`Failed to ${action} member:`, error);
-      alert(`Failed to ${action} member`);
-    }
+      fetchData();
+    } catch (error) {}
   };
 
   const updateShareAmount = async (memberId, newAmount) => {
     try {
-      const response = await fetch(`${API_BASE}/group/update-share`, {
+      await apiFetch(`${API_BASE}/group/update-share`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          memberId,
-          shareAmount: newAmount
-        })
+        body: { memberId, shareAmount: newAmount },
       });
-
-      const data = await response.json();
-      if (data.success) {
-        fetchData();
-        alert('Share amount updated successfully!');
-      } else {
-        alert(data.message || 'Failed to update share amount');
-      }
-    } catch (error) {
-      console.error('Failed to update share amount:', error);
-      alert('Failed to update share amount');
-    }
+      fetchData();
+    } catch (error) {}
   };
 
   const exportMemberData = () => {
@@ -188,14 +138,7 @@ export const MemberManagement = () => {
     return <span className={statusClass}>{statusText}</span>;
   };
 
-  if (selectedUser) {
-    return (
-      <UserGroupsView 
-        user={selectedUser} 
-        onBack={() => setSelectedUser(null)} 
-      />
-    );
-  }
+  if (loading) return <LoadingSpinner size="lg" text="Loading members..." />;
 
   return (
     <div className="member-management">
@@ -284,7 +227,7 @@ export const MemberManagement = () => {
                       <div className="actions-cell">
                         <button 
                           className="view-groups-btn"
-                          onClick={() => setSelectedUser(user)}
+                          onClick={() => navigate(`/admin/user/${user.userId._id}/groups`)}
                         >
                           <UserCheck className="btn-icon" />
                           View Groups

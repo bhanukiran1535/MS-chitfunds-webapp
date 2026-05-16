@@ -32,4 +32,11 @@ const MonthSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Optimized compound indexes for better query performance
+MonthSchema.index({ groupId: 1, userId: 1, monthName: 1 }, { unique: true }); // Unique constraint
+MonthSchema.index({ groupId: 1, monthName: 1 }); // Compound index for common queries
+MonthSchema.index({ userId: 1, status: 1 }); // Compound index for user status queries
+MonthSchema.index({ groupId: 1, status: 1 }); // Index for group status queries
+MonthSchema.index({ paymentDate: -1 }); // Index for payment date sorting
+
 module.exports = mongoose.model('Month', MonthSchema);
