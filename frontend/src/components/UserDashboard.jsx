@@ -206,7 +206,7 @@ const netSavings = computeNetSavings();
   return (
     <div className="dashboard">
       <div className="welcome-section">
-        <h2 className="welcome-title">Welcome back, {user.alias}!</h2>
+        <h2 className="welcome-title">Welcome back, {`${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}`}!</h2>
         <p className="welcome-subtitle">
           Manage your chit fund groups and track your payments
         </p>
@@ -278,7 +278,7 @@ const netSavings = computeNetSavings();
 
           {activeTab === "activity" && (
             <div className="p-6 shadow-xl rounded-2xl bg-gradient-to-br from-white to-blue-50 max-w-3xl mx-auto mt-6">
-              <h2 className="text-2xl font-bold text-blue-800 mb-4">Welcome back, {user.alias} 👋</h2>
+              <h2 className="text-2xl font-bold text-blue-800 mb-4">Welcome back, {`${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}`} 👋</h2>
               <p className="text-gray-700 mb-6">
                 Here’s a quick summary of your financial journey with <strong>MS Chitfunds</strong>.<br/>
                 Track your groups, payments, and progress all in one place.

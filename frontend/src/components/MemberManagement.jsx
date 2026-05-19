@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, Filter, MoreHorizontal, UserCheck, UserX, DollarSign, Calendar, Download } from 'lucide-react';
+import { Users, Search, UserCheck, Download, Edit2, Check, X } from 'lucide-react';
 import './MemberManagement.css';
 import { apiFetch } from '../lib/api';
 import { useDebounce } from '../hooks/useDebounce';
@@ -14,6 +14,10 @@ export const MemberManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [groups, setGroups] = useState([]);
+  const [editingAliasUserId, setEditingAliasUserId] = useState(null);
+  const [aliasDraft, setAliasDraft] = useState('');
+  const [aliasSaving, setAliasSaving] = useState(false);
+  const [aliasError, setAliasError] = useState('');
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -72,7 +76,8 @@ export const MemberManagement = () => {
       filtered = filtered.filter(user =>
         user.userId.firstName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         user.userId.lastName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        user.userId.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+        user.userId.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        user.userId.alias?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
       );
     }
     if (filterStatus !== 'all') {
@@ -109,12 +114,36 @@ export const MemberManagement = () => {
     } catch (error) {}
   };
 
+  const saveAlias = async (userId) => {
+    setAliasError('');
+    if (!aliasDraft.trim()) {
+      setAliasError('Alias cannot be blank.');
+      return;
+    }
+
+    setAliasSaving(true);
+    try {
+      await apiFetch(`${API_BASE}/user/admin/${userId}/alias`, {
+        method: 'PUT',
+        body: { alias: aliasDraft.trim() },
+      });
+      setEditingAliasUserId(null);
+      setAliasDraft('');
+      fetchData();
+    } catch (error) {
+      setAliasError(error.message || 'Unable to update alias.');
+    } finally {
+      setAliasSaving(false);
+    }
+  };
+
   const exportMemberData = () => {
     const csvContent = [
-      ['Name', 'Email', 'Total Groups', 'Active Groups', 'Total Investment'].join(','),
+      ['Name', 'Email', 'Alias', 'Total Groups', 'Active Groups', 'Total Investment'].join(','),
       ...filteredUsers.map(user => [
         `${user.userId.firstName} ${user.userId.lastName}`,
         user.userId.email,
+        user.userId.alias || '',
         user.totalGroups,
         user.activeGroups,
         user.totalInvestment
@@ -197,6 +226,7 @@ export const MemberManagement = () => {
               <thead>
                 <tr>
                   <th>User</th>
+                  <th>Alias</th>
                   <th>Total Groups</th>
                   <th>Active Groups</th>
                   <th>Total Investment</th>
@@ -214,6 +244,47 @@ export const MemberManagement = () => {
                         <div className="member-email">{user.userId.email}</div>
                       </div>
                     </td>
+                    <td>
+                      {editingAliasUserId === user.userId._id ? (
+                        <div className="alias-edit-row">
+                          <input
+                            className="alias-input"
+                            value={aliasDraft}
+                            onChange={(e) => setAliasDraft(e.target.value)}
+                            placeholder="Enter alias"
+                          />
+                          <button
+                            className="icon-btn save-alias-btn"
+                            type="button"
+                            disabled={aliasSaving}
+                            onClick={() => saveAlias(user.userId._id)}
+                          >
+                            <Check size={16} />
+                          </button>
+                          <button
+                            className="icon-btn cancel-alias-btn"
+                            type="button"
+                            onClick={() => {
+                              setEditingAliasUserId(null);
+                              setAliasDraft('');
+                              setAliasError('');
+                            }}
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="alias-value">
+                          {user.userId.alias ? (
+                            user.userId.alias
+                          ) : user.userId.isAdmin ? (
+                            '—'
+                          ) : (
+                            <span className="alias-placeholder">No alias set</span>
+                          )}
+                        </div>
+                      )}
+                    </td>
                     <td className="amount-cell">{user.totalGroups}</td>
                     <td className="amount-cell">
                       <span className={user.activeGroups > 0 ? 'status-active' : 'status-inactive'}>
@@ -225,6 +296,20 @@ export const MemberManagement = () => {
                     </td>
                     <td>
                       <div className="actions-cell">
+                        {editingAliasUserId !== user.userId._id && !user.userId.isAdmin ? (
+                          <button
+                            className="edit-alias-btn"
+                            type="button"
+                            onClick={() => {
+                              setEditingAliasUserId(user.userId._id);
+                              setAliasDraft(user.userId.alias || `${user.userId.firstName} ${user.userId.lastName}`);
+                              setAliasError('');
+                            }}
+                          >
+                            <Edit2 className="btn-icon" />
+                            Edit Alias
+                          </button>
+                        ) : null}
                         <button 
                           className="view-groups-btn"
                           onClick={() => navigate(`/admin/user/${user.userId._id}/groups`)}

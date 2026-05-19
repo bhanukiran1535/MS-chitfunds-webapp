@@ -40,7 +40,7 @@ groupRoute.get('/allGroups', async (req, res) => {
     const currentDate = new Date();
 
     const allGroups = await Group.find().select('-__v -updatedAt -createdAt -foremanCommission')
-                                        .populate('members.userId', 'firstName email');
+                                        .populate('members.userId', 'firstName lastName email alias isAdmin');
     // Attach status to each group
     const groupsWithStatus = allGroups.map(group => {
       const groupStart = new Date(group.startMonth);

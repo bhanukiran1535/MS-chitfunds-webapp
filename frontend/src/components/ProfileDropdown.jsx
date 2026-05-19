@@ -1,10 +1,10 @@
-import { LogOut, User as UserIcon, Settings, Key } from "lucide-react";
+import { LogOut, User as UserIcon, Settings } from "lucide-react";
 import { useState } from 'react';
 import "./ProfileDropdown.css";
-import { ChangePasswordModal } from './ChangePasswordModal';
+import { AccountSettingsModal } from './AccountSettingsModal';
 
 const ProfileDropdown = ({ user, onLogout }) => {
-  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   return (
     <>
@@ -12,21 +12,14 @@ const ProfileDropdown = ({ user, onLogout }) => {
         <div className="profile-header">
           <UserIcon className="profile-icon" />
           <div className="profile-details">
-            <p className="profile-alias">{user.alias}</p>
+            <p className="profile-alias">{`${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}`}</p>
             <p className="profile-email">{user.email}</p>
           </div>
         </div>
         <div className="profile-actions">
-          <button className="profile-button">
+          <button className="profile-button" onClick={() => setShowSettings(true)}>
             <Settings size={16} />
             Settings
-          </button>
-          <button 
-            className="profile-button" 
-            onClick={() => setShowChangePassword(true)}
-          >
-            <Key size={16} />
-            Change Password
           </button>
           <button className="profile-button logout" onClick={onLogout}>
             <LogOut size={16} />
@@ -35,9 +28,9 @@ const ProfileDropdown = ({ user, onLogout }) => {
         </div>
       </div>
 
-      <ChangePasswordModal 
-        isOpen={showChangePassword} 
-        onClose={() => setShowChangePassword(false)} 
+      <AccountSettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
       />
     </>
   );

@@ -25,6 +25,25 @@ export const GroupCard = ({ group }) => {
     }
   };
 
+  const getGroupStatus = () => {
+    if (group.groupStatus === 'completed' || group.status === 'completed') {
+      return 'completed';
+    }
+    if (group.groupStatus) {
+      return group.groupStatus;
+    }
+    return 'active';
+  };
+
+  const groupStatus = getGroupStatus();
+  const isCompleted = groupStatus === 'completed';
+  const statusClass = isCompleted ? 'status-completed' : getStatusClass(group.myPaymentStatus);
+  const statusText = isCompleted ? 'Completed' : getStatusText(group.myPaymentStatus);
+  const progressValue = Math.min(group.currentMonth || 0, group.tenure || 0);
+  const displayProgress = isCompleted ? `${group.tenure}/${group.tenure}` : `${progressValue}/${group.tenure}`;
+  const actionType = isCompleted ? 'secondary' : (group.myPaymentStatus === 'due' || group.myPaymentStatus === 'pending' ? 'primary' : 'secondary');
+  const actionLabel = isCompleted ? 'View Details' : (group.myPaymentStatus === 'due' || group.myPaymentStatus === 'pending' ? 'Pay Now' : 'View Details');
+
   const startMonth = new Date(group.startMonth).toLocaleString('default', {
     month: 'long',
     year: 'numeric'
@@ -34,14 +53,15 @@ export const GroupCard = ({ group }) => {
     navigate(`/user/group/${group._id}/details`, { state: { group } });
   };
   return (
-    <div className="group-card">
+    <div className={`group-card${isCompleted ? ' completed' : ''}`}>
+      {isCompleted && <div className="completed-stamp">Completed</div>}
       <div className="card-header">
         <div className="card-title-section">
           <h3 className="card-title">Group {group.groupNo}</h3>
           <p className="card-subtitle">Started: {startMonth}</p>
         </div>
-        <div className={`status-badge ${getStatusClass(group.myPaymentStatus)}`}>
-          {getStatusText(group.myPaymentStatus)}
+        <div className={`status-badge ${statusClass}`}>
+          {statusText}
         </div>
       </div>
 
@@ -62,25 +82,24 @@ export const GroupCard = ({ group }) => {
           <div className="info-item">
             <Clock className="info-icon orange" />
             <span className="info-label">Progress:</span>
-            <span className="info-value">{group.currentMonth}/{group.tenure}</span>
+            <span className="info-value">{displayProgress}</span>
           </div>
 
           <div className="info-item">
             <Calendar className="info-icon purple" />
             <span className="info-label">Payout Month:</span>
-<span className="info-value">
-  {group.preBookedMonth ? group.preBookedMonth : 'Not Claimed'}
-</span>
-
+            <span className="info-value">
+              {group.preBookedMonth ? group.preBookedMonth : 'Not Claimed'}
+            </span>
           </div>
         </div>
 
         <div className="card-actions">
           <button
-            className={`action-btn ${group.myPaymentStatus === 'due' || group.myPaymentStatus === 'pending' ? 'primary' : 'secondary'}`}
+            className={`action-btn ${actionType}`}
             onClick={handleDetailsClick}
           >
-            {group.myPaymentStatus === 'due' || group.myPaymentStatus === 'pending' ? 'Pay Now' : 'View Details'}
+            {actionLabel}
           </button>
         </div>
       </div>
