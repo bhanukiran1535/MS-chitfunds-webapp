@@ -6,314 +6,234 @@ import {
   Bell,
   Settings,
   LogOut,
-  Search,
+  ChevronRight,
+  Activity,
+  ChevronDown,
+  CircleDot,
   CheckCircle2,
   AlertTriangle,
   Clock,
-  ChevronRight,
-  TrendingUp,
-  Activity,
   ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 export function Dashboard() {
-  const [activeTab, setActiveTab] = useState("groups");
+  const [activeTab, setActiveTab] = useState<"groups" | "notifications" | "activity">("groups");
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] font-sans text-slate-900 overflow-hidden">
+    <div className="flex h-screen bg-[#f7f8fa] overflow-hidden" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+
       {/* Sidebar */}
-      <aside className="w-64 bg-[#0F172A] text-slate-300 flex flex-col transition-all duration-300 border-r border-slate-800 hidden md:flex">
-        <div className="h-16 flex items-center px-6 border-b border-slate-800">
-          <div className="flex items-center gap-2 text-white font-semibold text-lg tracking-tight">
-            <div className="w-8 h-8 rounded bg-indigo-600 flex items-center justify-center text-white">
-              <span className="font-bold">M</span>
+      <aside className="w-56 bg-[#111827] flex flex-col shrink-0">
+        {/* Logo */}
+        <div className="h-14 flex items-center px-5 border-b border-white/5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded bg-indigo-600 flex items-center justify-center text-white text-[11px] font-black tracking-tight">
+              MS
             </div>
-            MS ChitFund
+            <span className="text-[14px] font-semibold text-white tracking-tight">ChitFund</span>
           </div>
         </div>
 
-        <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
-          <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" active />
-          <NavItem icon={<Users size={18} />} label="My Groups" />
-          <NavItem icon={<Wallet size={18} />} label="Payments" />
-          <NavItem icon={<Activity size={18} />} label="Prebook Requests" />
-          <NavItem icon={<Bell size={18} />} label="Notifications" badge="2" />
+        {/* Nav */}
+        <nav className="flex-1 py-5 px-3 space-y-0.5 overflow-y-auto">
+          <SideNavItem icon={<LayoutDashboard size={15} />} label="Dashboard" active />
+          <SideNavItem icon={<Users size={15} />} label="My Groups" />
+          <SideNavItem icon={<Wallet size={15} />} label="Payments" />
+          <SideNavItem icon={<Activity size={15} />} label="Prebook Requests" />
+          <SideNavItem icon={<Bell size={15} />} label="Notifications" badge={2} />
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
-          <NavItem icon={<Settings size={18} />} label="Settings" />
-          <NavItem icon={<LogOut size={18} />} label="Logout" />
+        {/* Footer */}
+        <div className="p-3 border-t border-white/5 space-y-0.5">
+          <SideNavItem icon={<Settings size={15} />} label="Settings" />
+          <SideNavItem icon={<LogOut size={15} />} label="Sign out" />
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        {/* Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-10 shrink-0 sticky top-0 z-10">
-          <div className="flex items-center text-slate-500">
-            <span className="text-sm font-medium">Overview</span>
-          </div>
+      {/* Main */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
 
+        {/* Topbar */}
+        <header className="h-14 bg-white border-b border-gray-200/80 flex items-center justify-between px-7 shrink-0">
+          <div className="flex items-center gap-2 text-[13px] text-gray-500 font-medium">
+            <span>Overview</span>
+          </div>
           <div className="flex items-center gap-4">
-            <div className="relative hidden sm:block">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search groups..."
-                className="h-9 w-64 rounded-md border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-              />
-            </div>
-            <button className="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+            <button className="relative h-8 w-8 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+              <Bell size={16} />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full" />
             </button>
-            <div className="flex items-center gap-3 border-l border-slate-200 pl-4 ml-2">
-              <div className="text-right hidden sm:block">
-                <div className="text-sm font-semibold text-slate-900">Priya Sharma</div>
-                <div className="text-xs text-slate-500">Regular Member</div>
-              </div>
-              <Avatar className="h-9 w-9 border border-slate-200 cursor-pointer hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 transition-all">
-                <AvatarImage src="https://i.pravatar.cc/150?u=priya" />
-                <AvatarFallback className="bg-indigo-100 text-indigo-700 font-medium">PS</AvatarFallback>
+            <div className="flex items-center gap-2.5 cursor-pointer group">
+              <Avatar className="h-7 w-7 border border-gray-200">
+                <AvatarFallback className="bg-indigo-100 text-indigo-700 text-[10px] font-semibold">PS</AvatarFallback>
               </Avatar>
+              <div className="hidden sm:block">
+                <div className="text-[13px] font-medium text-gray-800 leading-none">Priya Sharma</div>
+                <div className="text-[11px] text-gray-400 mt-0.5">Member</div>
+              </div>
+              <ChevronDown size={13} className="text-gray-400 group-hover:text-gray-600" />
             </div>
           </div>
         </header>
 
-        {/* Scrollable Content */}
+        {/* Page content */}
         <div className="flex-1 overflow-auto">
-          <div className="p-6 lg:p-10 max-w-6xl mx-auto space-y-8 pb-20">
-            {/* Welcome Section */}
+          <div className="max-w-5xl mx-auto px-7 py-8 space-y-7 pb-20">
+
+            {/* Page heading */}
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">Welcome back, Priya</h1>
-              <p className="text-slate-500 mt-1 text-sm lg:text-base">Here's your financial snapshot for today.</p>
+              <h1 className="text-[22px] font-semibold text-gray-900 tracking-tight">Welcome back, Priya</h1>
+              <p className="text-[13px] text-gray-500 mt-0.5">Your financial snapshot — {new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</p>
             </div>
 
-            {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-              <StatCard
-                title="Active Groups"
-                value="3"
-                icon={<Users size={20} className="text-blue-600" />}
-                trend="+1 this month"
-                trendUp={true}
-              />
-              <StatCard
-                title="Current Savings"
-                value="₹24,500"
-                icon={<Wallet size={20} className="text-emerald-600" />}
-                trend="₹4,500 saved this month"
-                trendUp={true}
-              />
-              <StatCard
-                title="Upcoming Payments"
-                value="2"
-                icon={<Clock size={20} className="text-amber-600" />}
-                trend="Due in 5 days"
-                trendUp={false}
-                alert={true}
-              />
-              <StatCard
-                title="Pending Requests"
-                value="1"
-                icon={<Activity size={20} className="text-indigo-600" />}
-                trend="Prebook request under review"
-                trendUp={true}
-              />
+            {/* Stat row */}
+            <div className="grid grid-cols-4 gap-4">
+              <StatCard label="Active Groups" value="3" sub="2 with payments due" />
+              <StatCard label="Current Savings" value="₹24,500" sub="Net across all groups" accent />
+              <StatCard label="Upcoming Payments" value="2" sub="Due in 5 days" warn />
+              <StatCard label="Pending Requests" value="1" sub="Prebook under review" />
             </div>
 
-            {/* Main Tabs Area */}
-            <Tabs defaultValue="groups" className="w-full mt-8" onValueChange={setActiveTab}>
-              <div className="flex items-center justify-between border-b border-slate-200 pb-px">
-                <TabsList className="bg-transparent p-0 h-auto gap-6 justify-start w-auto">
-                  <TabsTrigger
-                    value="groups"
-                    className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 rounded-none px-0 pb-3 pt-2 font-medium text-slate-500 hover:text-slate-700"
+            {/* Tabs */}
+            <div>
+              <div className="flex items-center gap-0 border-b border-gray-200">
+                {(["groups", "notifications", "activity"] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`relative px-4 py-2.5 text-[13px] font-medium transition-colors capitalize ${
+                      activeTab === tab
+                        ? "text-gray-900"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
                   >
-                    My Groups
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="notifications"
-                    className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 rounded-none px-0 pb-3 pt-2 font-medium text-slate-500 hover:text-slate-700 flex items-center gap-2"
-                  >
-                    Notifications
-                    <Badge className="h-5 px-1.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-100 rounded-full text-xs font-semibold">
-                      2
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="activity"
-                    className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 rounded-none px-0 pb-3 pt-2 font-medium text-slate-500 hover:text-slate-700"
-                  >
-                    Activity Summary
-                  </TabsTrigger>
-                </TabsList>
+                    {tab === "groups" ? "My Groups" : tab === "notifications" ? "Notifications" : "Activity"}
+                    {tab === "notifications" && (
+                      <span className="ml-1.5 text-[10px] font-bold bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full">2</span>
+                    )}
+                    {activeTab === tab && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-indigo-600 rounded-t" />
+                    )}
+                  </button>
+                ))}
               </div>
 
-              {/* Groups Tab Content */}
-              <TabsContent value="groups" className="mt-6 outline-none focus:ring-0">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <GroupCard
-                    groupNo="5"
-                    chitValue="1,20,000"
-                    tenure="12"
-                    monthlyShare="10,000"
-                    progress={40}
-                    status="paid"
-                    currentMonth={5}
-                  />
-                  <GroupCard
-                    groupNo="8"
-                    chitValue="60,000"
-                    tenure="10"
-                    monthlyShare="6,000"
-                    progress={70}
-                    status="due"
-                    currentMonth={7}
-                  />
-                  <GroupCard
-                    groupNo="12"
-                    chitValue="2,40,000"
-                    tenure="24"
-                    monthlyShare="10,000"
-                    progress={12.5}
-                    status="upcoming"
-                    currentMonth={3}
-                  />
-                </div>
-              </TabsContent>
+              <div className="mt-6">
+                {activeTab === "groups" && (
+                  <div className="grid grid-cols-3 gap-4">
+                    <GroupCard groupNo="5"  chitValue="1,20,000" tenure={12} monthlyShare="10,000" progress={40} currentMonth={5} payStatus="paid" />
+                    <GroupCard groupNo="8"  chitValue="60,000"   tenure={10} monthlyShare="6,000"  progress={70} currentMonth={7} payStatus="due" />
+                    <GroupCard groupNo="12" chitValue="2,40,000" tenure={24} monthlyShare="10,000" progress={12} currentMonth={3} payStatus="upcoming" />
+                  </div>
+                )}
 
-              {/* Notifications Tab Content */}
-              <TabsContent value="notifications" className="mt-6 outline-none focus:ring-0">
-                <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden">
-                  <div className="divide-y divide-slate-100">
-                    <NotificationItem
-                      title="Prebook Request Approved"
-                      message="Your prebook request for Group 5 - June 2025 has been approved by the foreman."
-                      time="2 hours ago"
+                {activeTab === "notifications" && (
+                  <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] divide-y divide-gray-100 overflow-hidden">
+                    <NotifRow
                       type="success"
-                      isNew
+                      title="Prebook request approved"
+                      body="Your prebook for Group 5 — June 2025 was approved by the foreman."
+                      time="2h ago"
+                      unread
                     />
-                    <NotificationItem
-                      title="Upcoming Payment Reminder"
-                      message="Monthly installment of ₹6,000 for Group 8 is due on 15th Oct."
-                      time="Yesterday"
+                    <NotifRow
                       type="warning"
-                      isNew
+                      title="Payment due in 5 days"
+                      body="₹6,000 installment for Group 8 is due on 15 Oct 2025."
+                      time="Yesterday"
+                      unread
                     />
-                    <NotificationItem
-                      title="New Group Invitation"
-                      message="You have been invited to join Group 15 (Chit Value: ₹5,00,000). Review details."
-                      time="Oct 10, 2024"
+                    <NotifRow
                       type="info"
+                      title="Group invitation"
+                      body="You've been invited to join Group 15 — Chit Value ₹5,00,000."
+                      time="Oct 10"
                     />
-                    <NotificationItem
-                      title="Payment Successful"
-                      message="We received your payment of ₹10,000 for Group 5."
-                      time="Oct 5, 2024"
+                    <NotifRow
                       type="success"
+                      title="Payment received"
+                      body="₹10,000 for Group 5, October 2025 has been confirmed."
+                      time="Oct 5"
                     />
                   </div>
-                </Card>
-              </TabsContent>
+                )}
 
-              {/* Activity Summary Tab Content */}
-              <TabsContent value="activity" className="mt-6 outline-none focus:ring-0">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <Card className="border border-slate-200 shadow-sm rounded-xl">
-                    <CardContent className="p-6">
-                      <div className="text-sm font-medium text-slate-500 mb-1">Total Amount Paid</div>
-                      <div className="text-3xl font-bold text-slate-900">₹84,000</div>
-                      <div className="text-sm text-emerald-600 flex items-center gap-1 mt-2 font-medium">
-                        <TrendingUp size={14} /> Across all active groups
+                {activeTab === "activity" && (
+                  <div className="space-y-5">
+                    {/* Summary row */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-white rounded-xl border border-gray-200/80 px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Total Paid</p>
+                        <p className="text-[24px] font-bold text-gray-900 tabular-nums">₹84,000</p>
+                        <p className="text-[12px] text-gray-500 mt-1">Across all active groups</p>
                       </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="border border-slate-200 shadow-sm rounded-xl">
-                    <CardContent className="p-6">
-                      <div className="text-sm font-medium text-slate-500 mb-1">Prebook Requests</div>
-                      <div className="text-3xl font-bold text-slate-900">2</div>
-                      <div className="text-sm text-slate-500 mt-2">1 Approved, 1 Pending</div>
-                    </CardContent>
-                  </Card>
-                  <Card className="border border-slate-200 shadow-sm rounded-xl">
-                    <CardContent className="p-6">
-                      <div className="text-sm font-medium text-slate-500 mb-1">Last Payment Date</div>
-                      <div className="text-3xl font-bold text-slate-900">Oct 5</div>
-                      <div className="text-sm text-slate-500 mt-2">₹10,000 for Group 5</div>
-                    </CardContent>
-                  </Card>
-                </div>
+                      <div className="bg-white rounded-xl border border-gray-200/80 px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Prebook Requests</p>
+                        <p className="text-[24px] font-bold text-gray-900 tabular-nums">2</p>
+                        <p className="text-[12px] text-gray-500 mt-1">1 approved · 1 pending</p>
+                      </div>
+                      <div className="bg-white rounded-xl border border-gray-200/80 px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Last Payment</p>
+                        <p className="text-[24px] font-bold text-gray-900 tabular-nums">Oct 5</p>
+                        <p className="text-[12px] text-gray-500 mt-1">₹10,000 · Group 5</p>
+                      </div>
+                    </div>
 
-                <Card className="border border-slate-200 shadow-sm rounded-xl">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Recent Transactions</CardTitle>
-                    <CardDescription>Your latest payments and payouts</CardDescription>
-                  </CardHeader>
-                  <div className="px-6 pb-6">
-                    <div className="space-y-4">
-                      <TransactionItem
-                        title="Monthly Installment - Group 5"
-                        date="Oct 5, 2024"
-                        amount="-₹10,000"
-                        status="Completed"
-                      />
-                      <TransactionItem
-                        title="Monthly Installment - Group 8"
-                        date="Sep 15, 2024"
-                        amount="-₹6,000"
-                        status="Completed"
-                      />
-                      <TransactionItem
-                        title="Monthly Installment - Group 12"
-                        date="Sep 10, 2024"
-                        amount="-₹10,000"
-                        status="Completed"
-                      />
-                      <TransactionItem
-                        title="Prize Payout - Group 3 (Closed)"
-                        date="Aug 20, 2024"
-                        amount="+₹97,000"
-                        status="Completed"
-                        isCredit
-                      />
+                    {/* Transactions */}
+                    <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+                      <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+                        <h3 className="text-[14px] font-semibold text-gray-900">Recent Transactions</h3>
+                      </div>
+                      {/* Table header */}
+                      <div className="grid px-5 py-2 bg-gray-50/70 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider"
+                        style={{ gridTemplateColumns: "1fr 7rem 7rem 5rem" }}>
+                        <span>Description</span>
+                        <span>Date</span>
+                        <span className="text-right">Amount</span>
+                        <span className="text-right">Status</span>
+                      </div>
+                      {[
+                        { desc: "Monthly Installment · Group 5",   date: "Oct 5, 2024",  amount: "−₹10,000", credit: false },
+                        { desc: "Monthly Installment · Group 8",   date: "Sep 15, 2024", amount: "−₹6,000",  credit: false },
+                        { desc: "Monthly Installment · Group 12",  date: "Sep 10, 2024", amount: "−₹10,000", credit: false },
+                        { desc: "Prize Payout · Group 3 (closed)", date: "Aug 20, 2024", amount: "+₹97,000", credit: true  },
+                      ].map((tx, i) => (
+                        <div key={i} className="grid px-5 py-3 border-b border-gray-100 last:border-b-0 items-center hover:bg-gray-50/40 transition-colors text-[13px]"
+                          style={{ gridTemplateColumns: "1fr 7rem 7rem 5rem" }}>
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${tx.credit ? "bg-emerald-50" : "bg-gray-100"}`}>
+                              <ArrowUpRight size={12} className={tx.credit ? "text-emerald-600 rotate-180" : "text-gray-500"} />
+                            </div>
+                            <span className="font-medium text-gray-800">{tx.desc}</span>
+                          </div>
+                          <span className="text-gray-500">{tx.date}</span>
+                          <span className={`text-right font-semibold tabular-nums ${tx.credit ? "text-emerald-600" : "text-gray-900"}`}>{tx.amount}</span>
+                          <span className="text-right text-[11px] font-medium text-gray-400">Done</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
 
-// Subcomponents
-
-function NavItem({ icon, label, active, badge }: { icon: React.ReactNode; label: string; active?: boolean; badge?: string }) {
+function SideNavItem({ icon, label, active, badge }: { icon: React.ReactNode; label: string; active?: boolean; badge?: number }) {
   return (
-    <a
-      href="#"
-      className={`flex items-center justify-between px-3 py-2.5 rounded-lg mb-1 transition-colors ${
-        active
-          ? "bg-indigo-600/10 text-indigo-400 font-medium"
-          : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        {icon}
-        <span className="text-sm">{label}</span>
-      </div>
-      {badge && (
-        <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+    <a href="#" className={`flex items-center justify-between px-3 py-2 rounded-md text-[13px] font-medium transition-colors ${
+      active ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+    }`}>
+      <span className="flex items-center gap-2.5">{icon}{label}</span>
+      {badge !== undefined && (
+        <span className="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
           {badge}
         </span>
       )}
@@ -321,145 +241,87 @@ function NavItem({ icon, label, active, badge }: { icon: React.ReactNode; label:
   );
 }
 
-function StatCard({ title, value, icon, trend, trendUp, alert }: any) {
+function StatCard({ label, value, sub, accent, warn }: { label: string; value: string; sub: string; accent?: boolean; warn?: boolean }) {
   return (
-    <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden group hover:shadow-md transition-shadow">
-      <CardContent className="p-5">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
-            <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
-          </div>
-          <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100 group-hover:bg-white transition-colors">
-            {icon}
-          </div>
-        </div>
-        <div className={`mt-4 text-xs font-medium flex items-center gap-1.5 ${alert ? 'text-amber-600' : 'text-slate-500'}`}>
-          {trendUp === true && <TrendingUp size={14} className="text-emerald-500" />}
-          {trendUp === false && <TrendingUp size={14} className="text-amber-500 rotate-180" />}
-          {trend}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function GroupCard({ groupNo, chitValue, tenure, monthlyShare, progress, status, currentMonth }: any) {
-  return (
-    <Card className="border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-all duration-200 group flex flex-col h-full relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-      <CardHeader className="p-5 pb-4 border-b border-slate-100 flex-row items-start justify-between space-y-0">
-        <div>
-          <div className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-1">Group No.</div>
-          <CardTitle className="text-xl text-slate-900">{groupNo}</CardTitle>
-        </div>
-        <StatusBadge status={status} />
-      </CardHeader>
-      
-      <CardContent className="p-5 flex-1">
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-y-4 gap-x-2">
-            <div>
-              <div className="text-xs text-slate-500 mb-1">Chit Value</div>
-              <div className="font-semibold text-slate-900">₹{chitValue}</div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-500 mb-1">Monthly Share</div>
-              <div className="font-semibold text-slate-900">₹{monthlyShare}</div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-500 mb-1">Tenure</div>
-              <div className="font-semibold text-slate-900">{tenure} Months</div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-500 mb-1">Current Month</div>
-              <div className="font-semibold text-slate-900">Month {currentMonth}</div>
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <div className="flex justify-between text-xs mb-1.5 font-medium">
-              <span className="text-slate-500">Progress</span>
-              <span className="text-indigo-600">{progress}%</span>
-            </div>
-            <Progress value={progress} className="h-2 bg-slate-100" />
-          </div>
-        </div>
-      </CardContent>
-      
-      <CardFooter className="p-5 pt-0 mt-auto">
-        <Button variant="outline" className="w-full justify-center shadow-sm border-slate-200 hover:bg-slate-50 hover:text-indigo-600 transition-colors">
-          View Details <ChevronRight size={16} className="ml-1 opacity-70" />
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-}
-
-function StatusBadge({ status }: { status: "paid" | "due" | "upcoming" | "pending" }) {
-  if (status === "paid") {
-    return (
-      <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1 shadow-none">
-        <CheckCircle2 size={12} /> Paid
-      </Badge>
-    );
-  }
-  if (status === "due") {
-    return (
-      <Badge className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1 shadow-none">
-        <AlertTriangle size={12} /> Due Now
-      </Badge>
-    );
-  }
-  if (status === "upcoming") {
-    return (
-      <Badge className="bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1 shadow-none">
-        <Clock size={12} /> Upcoming
-      </Badge>
-    );
-  }
-  return null;
-}
-
-function NotificationItem({ title, message, time, type, isNew }: any) {
-  const getIcon = () => {
-    switch(type) {
-      case 'success': return <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0"><CheckCircle2 size={20} /></div>;
-      case 'warning': return <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 shrink-0"><AlertTriangle size={20} /></div>;
-      default: return <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0"><Bell size={20} /></div>;
-    }
-  };
-
-  return (
-    <div className={`p-5 flex gap-4 hover:bg-slate-50 transition-colors ${isNew ? 'bg-indigo-50/30' : ''}`}>
-      {getIcon()}
-      <div className="flex-1">
-        <div className="flex justify-between items-start mb-1">
-          <h4 className={`font-semibold text-sm ${isNew ? 'text-slate-900' : 'text-slate-700'}`}>{title}</h4>
-          <span className="text-xs text-slate-400 whitespace-nowrap">{time}</span>
-        </div>
-        <p className="text-sm text-slate-500 leading-relaxed">{message}</p>
-      </div>
-      {isNew && <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 shrink-0"></div>}
+    <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] px-5 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">{label}</p>
+      <p className={`text-[26px] font-bold tabular-nums leading-none ${accent ? "text-indigo-600" : warn ? "text-amber-600" : "text-gray-900"}`}>{value}</p>
+      <p className="text-[12px] text-gray-400 mt-2">{sub}</p>
     </div>
   );
 }
 
-function TransactionItem({ title, date, amount, status, isCredit }: any) {
+function GroupCard({ groupNo, chitValue, tenure, monthlyShare, progress, currentMonth, payStatus }: any) {
+  const statusMap = {
+    paid:     { dot: "bg-emerald-500", label: "Paid",     text: "text-emerald-700" },
+    due:      { dot: "bg-amber-500",   label: "Due Now",  text: "text-amber-700"   },
+    upcoming: { dot: "bg-gray-300",    label: "Upcoming", text: "text-gray-500"    },
+  } as const;
+  const s = statusMap[payStatus as keyof typeof statusMap];
+
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isCredit ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
-          {isCredit ? <ArrowDownRight size={18} /> : <ArrowUpRight size={18} />}
-        </div>
-        <div>
-          <div className="font-medium text-slate-900 text-sm">{title}</div>
-          <div className="text-xs text-slate-500">{date}</div>
+    <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] flex flex-col hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition-shadow">
+      <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Group No.</p>
+            <p className="text-[22px] font-bold text-gray-900 leading-none">{groupNo}</p>
+          </div>
+          <span className={`inline-flex items-center gap-1.5 text-[12px] font-semibold ${s.text}`}>
+            <span className={`w-[7px] h-[7px] rounded-full ${s.dot}`} />{s.label}
+          </span>
         </div>
       </div>
-      <div className="text-right">
-        <div className={`font-semibold ${isCredit ? 'text-emerald-600' : 'text-slate-900'}`}>{amount}</div>
-        <div className="text-xs text-slate-500 mt-0.5">{status}</div>
+
+      <div className="px-5 py-4 flex-1 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <p className="text-[11px] text-gray-400 mb-0.5">Chit Value</p>
+            <p className="text-[14px] font-semibold text-gray-900">₹{chitValue}</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-gray-400 mb-0.5">Monthly Share</p>
+            <p className="text-[14px] font-semibold text-gray-900">₹{monthlyShare}</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-gray-400 mb-0.5">Tenure</p>
+            <p className="text-[14px] font-semibold text-gray-900">{tenure} months</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-gray-400 mb-0.5">Current Month</p>
+            <p className="text-[14px] font-semibold text-gray-900">Month {currentMonth}</p>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex justify-between text-[12px] mb-1.5">
+            <span className="text-gray-400">Progress</span>
+            <span className="font-semibold text-indigo-600">{progress}%</span>
+          </div>
+          <Progress value={progress} className="h-1 bg-gray-100 [&>div]:bg-indigo-500" />
+        </div>
+      </div>
+
+      <div className="px-5 pb-5">
+        <button className="w-full flex items-center justify-center gap-1 text-[13px] font-medium text-gray-600 border border-gray-200 rounded-lg py-2 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/40 transition-all">
+          View Details <ChevronRight size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function NotifRow({ type, title, body, time, unread }: { type: "success" | "warning" | "info"; title: string; body: string; time: string; unread?: boolean }) {
+  const accent = { success: "bg-emerald-500", warning: "bg-amber-500", info: "bg-indigo-500" }[type];
+  return (
+    <div className={`flex gap-4 px-5 py-4 hover:bg-gray-50/60 transition-colors ${unread ? "bg-indigo-50/20" : ""}`}>
+      <div className={`w-0.5 rounded-full shrink-0 self-stretch ${unread ? accent : "bg-transparent"}`} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-3 mb-0.5">
+          <p className={`text-[13px] font-semibold ${unread ? "text-gray-900" : "text-gray-700"}`}>{title}</p>
+          <span className="text-[11px] text-gray-400 whitespace-nowrap shrink-0">{time}</span>
+        </div>
+        <p className="text-[13px] text-gray-500 leading-relaxed">{body}</p>
       </div>
     </div>
   );

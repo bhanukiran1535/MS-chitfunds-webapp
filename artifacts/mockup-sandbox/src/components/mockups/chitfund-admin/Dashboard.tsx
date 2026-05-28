@@ -11,352 +11,299 @@ import {
   UserPlus,
   LayoutDashboard,
   LogOut,
-  Building,
-  CheckCircle2,
-  XCircle,
+  FolderOpen,
+  ChevronDown,
   MoreHorizontal,
-  FolderOpen
 } from "lucide-react";
-
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+const pendingRequests = [
+  { id: 1, name: "Priya Sharma",  initials: "PS", type: "Prebook Request",            details: "Group 5 · June 2025",  amount: null },
+  { id: 2, name: "Amit Patel",    initials: "AP", type: "Cash Payment Confirmation",  details: "Group 3 · May 2025",   amount: "₹5,000" },
+  { id: 3, name: "Sneha Iyer",    initials: "SI", type: "Leave Group Request",         details: "Group 8",              amount: null },
+];
+
+const groups = [
+  { id: "G-001", name: "Alpha Savers",     chitValue: "₹1,00,000", members: "10/10", status: "active" },
+  { id: "G-002", name: "Wealth Builders",  chitValue: "₹50,000",   members: "20/20", status: "active" },
+  { id: "G-003", name: "Future Secure",    chitValue: "₹2,00,000", members: "12/20", status: "upcoming" },
+  { id: "G-004", name: "Prosperity Fund",  chitValue: "₹5,00,000", members: "10/10", status: "completed" },
+];
+
+const members = [
+  { id: "M-101", name: "Rahul Verma",   initials: "RV", phone: "+91 98765 43210", groups: ["G-001", "G-002"], status: "active" },
+  { id: "M-102", name: "Anita Desai",   initials: "AD", phone: "+91 87654 32109", groups: ["G-001"],           status: "active" },
+  { id: "M-103", name: "Vikram Singh",  initials: "VS", phone: "+91 76543 21098", groups: ["G-003"],           status: "active" },
+  { id: "M-104", name: "Meera Reddy",   initials: "MR", phone: "+91 65432 10987", groups: ["G-002", "G-004"],  status: "active" },
+  { id: "M-105", name: "Suresh Kumar",  initials: "SK", phone: "+91 54321 09876", groups: ["G-001"],           status: "defaulter" },
+];
+
+function StatusPill({ status }: { status: string }) {
+  const map: Record<string, { dot: string; label: string; text: string }> = {
+    active:     { dot: "bg-emerald-500", label: "Active",    text: "text-emerald-700" },
+    upcoming:   { dot: "bg-blue-400",    label: "Upcoming",  text: "text-blue-700" },
+    completed:  { dot: "bg-gray-300",    label: "Completed", text: "text-gray-500" },
+    defaulter:  { dot: "bg-red-500",     label: "Defaulter", text: "text-red-600" },
+  };
+  const s = map[status] ?? map.active;
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[12px] font-semibold ${s.text}`}>
+      <span className={`w-[7px] h-[7px] rounded-full ${s.dot} shrink-0`} />{s.label}
+    </span>
+  );
+}
 
 export function Dashboard() {
-  const [activeTab, setActiveTab] = useState("requests");
-
-  const statCards = [
-    { title: "Total Groups", value: "8", icon: FolderOpen, color: "text-blue-500" },
-    { title: "Total Members", value: "47", icon: Users, color: "text-indigo-500" },
-    { title: "Pending Requests", value: "3", icon: Bell, color: "text-amber-500" },
-    { title: "Monthly Collection", value: "₹1,85,000", icon: Wallet, color: "text-emerald-500" },
-  ];
-
-  const pendingRequests = [
-    { id: 1, name: "Priya Sharma", type: "Prebook Request", details: "Group 5, June 2025", amount: null },
-    { id: 2, name: "Amit Patel", type: "Cash Payment Confirmation", details: "Group 3, May 2025", amount: "₹5,000" },
-    { id: 3, name: "Sneha Iyer", type: "Leave Group Request", details: "Group 8", amount: null },
-  ];
-
-  const groups = [
-    { id: "G-001", name: "Alpha Savers", chitValue: "₹1,00,000", members: "10/10", status: "active" },
-    { id: "G-002", name: "Wealth Builders", chitValue: "₹50,000", members: "20/20", status: "active" },
-    { id: "G-003", name: "Future Secure", chitValue: "₹2,00,000", members: "12/20", status: "upcoming" },
-    { id: "G-004", name: "Prosperity Fund", chitValue: "₹5,00,000", members: "10/10", status: "completed" },
-  ];
-
-  const members = [
-    { id: "M-101", name: "Rahul Verma", phone: "+91 9876543210", groups: ["G-001", "G-002"], status: "Active" },
-    { id: "M-102", name: "Anita Desai", phone: "+91 8765432109", groups: ["G-001"], status: "Active" },
-    { id: "M-103", name: "Vikram Singh", phone: "+91 7654321098", groups: ["G-003"], status: "Active" },
-    { id: "M-104", name: "Meera Reddy", phone: "+91 6543210987", groups: ["G-002", "G-004"], status: "Active" },
-    { id: "M-105", name: "Suresh Kumar", phone: "+91 5432109876", groups: ["G-001"], status: "Defaulter" },
-  ];
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-      case "Active":
-        return <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-none">Active</Badge>;
-      case "upcoming":
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-none">Upcoming</Badge>;
-      case "completed":
-        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100 border-none">Completed</Badge>;
-      case "Defaulter":
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100 border-none">Defaulter</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
+  const [activeTab, setActiveTab] = useState<"requests" | "groups" | "members">("requests");
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
+    <div className="flex h-screen bg-[#f7f8fa] overflow-hidden" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col hidden md:flex shrink-0">
-        <div className="h-16 flex items-center px-6 border-b border-slate-800">
-          <Building className="h-6 w-6 text-indigo-400 mr-3" />
-          <span className="font-bold text-lg text-white">MS ChitFund</span>
+      <aside className="w-56 bg-[#111827] flex flex-col shrink-0">
+        <div className="h-14 flex items-center px-5 border-b border-white/5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded bg-indigo-600 flex items-center justify-center text-white text-[11px] font-black tracking-tight">
+              MS
+            </div>
+            <span className="text-[14px] font-semibold text-white tracking-tight">ChitFund</span>
+          </div>
         </div>
 
-        <nav className="flex-1 py-6 px-4 space-y-2">
-          <div className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Overview
-          </div>
-          <button className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white">
-            <LayoutDashboard className="mr-3 h-5 w-5" />
-            Dashboard
-          </button>
-          
-          <div className="px-3 mt-8 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Management
-          </div>
-          <button className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-800 hover:text-white transition-colors">
-            <FolderOpen className="mr-3 h-5 w-5" />
-            Groups
-          </button>
-          <button className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-800 hover:text-white transition-colors">
-            <Users className="mr-3 h-5 w-5" />
-            Members
-          </button>
-          <button className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-800 hover:text-white transition-colors">
-            <Wallet className="mr-3 h-5 w-5" />
-            Collections
-          </button>
+        <nav className="flex-1 py-5 px-3 space-y-0.5 overflow-y-auto">
+          <p className="px-3 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-600">Overview</p>
+          <SideItem icon={<LayoutDashboard size={15} />} label="Dashboard" active />
 
-          <div className="px-3 mt-8 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            System
-          </div>
-          <button className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-800 hover:text-white transition-colors">
-            <Settings className="mr-3 h-5 w-5" />
-            Settings
-          </button>
+          <p className="px-3 pt-4 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-600">Manage</p>
+          <SideItem icon={<FolderOpen size={15} />} label="Groups" />
+          <SideItem icon={<Users size={15} />} label="Members" />
+          <SideItem icon={<Wallet size={15} />} label="Collections" />
+
+          <p className="px-3 pt-4 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-600">System</p>
+          <SideItem icon={<Settings size={15} />} label="Settings" />
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
-          <button className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-800 hover:text-white transition-colors text-slate-400">
-            <LogOut className="mr-3 h-5 w-5" />
-            Logout
-          </button>
+        <div className="p-3 border-t border-white/5">
+          <SideItem icon={<LogOut size={15} />} label="Sign out" />
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-10">
-          <div className="flex items-center">
-            <h1 className="text-xl font-semibold text-slate-800">Admin Dashboard</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-slate-700">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full border border-white"></span>
-            </Button>
-            <div className="h-8 w-px bg-slate-200"></div>
-            <div className="flex items-center space-x-3 cursor-pointer">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-slate-700 leading-none">Raj Kumar</p>
-                <p className="text-xs text-slate-500 mt-1">Administrator</p>
-              </div>
-              <Avatar className="h-9 w-9 border border-slate-200">
-                <AvatarImage src="https://api.dicebear.com/7.x/initials/svg?seed=RK&backgroundColor=4f46e5" alt="Raj Kumar" />
-                <AvatarFallback className="bg-indigo-100 text-indigo-700">RK</AvatarFallback>
+      {/* Main */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+
+        {/* Topbar */}
+        <header className="h-14 bg-white border-b border-gray-200/80 flex items-center justify-between px-7 shrink-0">
+          <h1 className="text-[15px] font-semibold text-gray-900">Admin Dashboard</h1>
+          <div className="flex items-center gap-4">
+            <button className="relative h-8 w-8 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+              <Bell size={16} />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full" />
+            </button>
+            <div className="flex items-center gap-2.5 cursor-pointer group">
+              <Avatar className="h-7 w-7 border border-gray-200">
+                <AvatarFallback className="bg-indigo-100 text-indigo-700 text-[10px] font-semibold">RK</AvatarFallback>
               </Avatar>
+              <div className="hidden sm:block">
+                <div className="text-[13px] font-medium text-gray-800 leading-none">Raj Kumar</div>
+                <div className="text-[11px] text-gray-400 mt-0.5">Administrator</div>
+              </div>
+              <ChevronDown size={13} className="text-gray-400 group-hover:text-gray-600" />
             </div>
           </div>
         </header>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-auto p-6 md:p-8">
-          <div className="max-w-6xl mx-auto space-y-8">
-            
-            {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-5xl mx-auto px-7 py-8 space-y-7 pb-20">
+
+            {/* Page header + actions */}
+            <div className="flex items-end justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-slate-800">Overview</h2>
-                <p className="text-sm text-slate-500">Manage your chitfund operations</p>
+                <h2 className="text-[22px] font-semibold text-gray-900 tracking-tight">Overview</h2>
+                <p className="text-[13px] text-gray-500 mt-0.5">Manage groups, members, and review requests</p>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button variant="outline" size="sm" className="hidden sm:flex">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-8 text-[13px] font-medium border-gray-200 text-gray-600 shadow-none">
+                  <Settings className="h-3.5 w-3.5 mr-1.5" />Settings
                 </Button>
-                <Button variant="secondary" size="sm">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Add Member
+                <Button variant="outline" size="sm" className="h-8 text-[13px] font-medium border-gray-200 text-gray-600 shadow-none">
+                  <UserPlus className="h-3.5 w-3.5 mr-1.5" />Add Member
                 </Button>
-                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Group
+                <Button size="sm" className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-medium shadow-none">
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />New Group
                 </Button>
               </div>
             </div>
 
-            {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {statCards.map((stat, i) => (
-                <Card key={i} className="border-slate-200 shadow-sm">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium text-slate-500">{stat.title}</CardTitle>
-                    <stat.icon className={`h-4 w-4 ${stat.color}`} />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-slate-800">{stat.value}</div>
-                  </CardContent>
-                </Card>
-              ))}
+            {/* Stat row */}
+            <div className="grid grid-cols-4 gap-4">
+              <StatCard label="Total Groups"      value="8"          sub="4 currently active" />
+              <StatCard label="Total Members"     value="47"         sub="Across all groups"  />
+              <StatCard label="Pending Requests"  value="3"          sub="Awaiting review"    warn />
+              <StatCard label="Monthly Collection" value="₹1,85,000" sub="Current cycle"      accent />
             </div>
 
-            {/* Tabs Area */}
-            <Tabs defaultValue="requests" value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 md:w-[600px] mb-6 p-1 bg-slate-100/80 rounded-lg border border-slate-200">
-                <TabsTrigger value="requests" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                  Pending Requests
-                  <Badge className="ml-2 bg-red-100 text-red-700 hover:bg-red-100 border-none rounded-full px-1.5 h-5 min-w-5 flex items-center justify-center">3</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="groups" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">Group Management</TabsTrigger>
-                <TabsTrigger value="members" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">Member Management</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="requests" className="focus-visible:outline-none">
-                <Card className="border-slate-200 shadow-sm overflow-hidden">
-                  <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-                    <CardTitle className="text-base font-semibold">Action Required</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
-                          <TableHead className="w-[200px]">Member</TableHead>
-                          <TableHead>Request Type</TableHead>
-                          <TableHead>Details</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {pendingRequests.map((req) => (
-                          <TableRow key={req.id}>
-                            <TableCell className="font-medium text-slate-800">{req.name}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="font-normal text-slate-600 border-slate-200">
-                                {req.type}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-slate-500">{req.details}</TableCell>
-                            <TableCell className="text-slate-800 font-medium">{req.amount || "-"}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button size="sm" variant="outline" className="h-8 border-green-200 bg-green-50 hover:bg-green-100 hover:text-green-800 text-green-700">
-                                  <Check className="h-4 w-4 mr-1" />
-                                  Approve
-                                </Button>
-                                <Button size="sm" variant="outline" className="h-8 border-red-200 bg-red-50 hover:bg-red-100 hover:text-red-800 text-red-700">
-                                  <X className="h-4 w-4 mr-1" />
-                                  Reject
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="groups" className="focus-visible:outline-none">
-                <Card className="border-slate-200 shadow-sm overflow-hidden">
-                  <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4 flex flex-row items-center justify-between">
-                    <CardTitle className="text-base font-semibold">All Groups</CardTitle>
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                      <Input placeholder="Search groups..." className="h-9 w-[250px] pl-9 text-sm bg-white" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
-                          <TableHead>Group No.</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Chit Value</TableHead>
-                          <TableHead>Members</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {groups.map((group) => (
-                          <TableRow key={group.id}>
-                            <TableCell className="font-medium text-slate-600">{group.id}</TableCell>
-                            <TableCell className="font-medium text-slate-900">{group.name}</TableCell>
-                            <TableCell className="text-slate-700">{group.chitValue}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center">
-                                <Users className="h-3.5 w-3.5 mr-1.5 text-slate-400" />
-                                <span className="text-slate-600 text-sm">{group.members}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>{getStatusBadge(group.status)}</TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-700">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="members" className="focus-visible:outline-none">
-                <Card className="border-slate-200 shadow-sm overflow-hidden">
-                  <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4 flex flex-row items-center justify-between">
-                    <CardTitle className="text-base font-semibold">Member Directory</CardTitle>
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                      <Input placeholder="Search members by name or ID..." className="h-9 w-[300px] pl-9 text-sm bg-white" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
-                          <TableHead>Member ID</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Contact</TableHead>
-                          <TableHead>Enrolled Groups</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {members.map((member) => (
-                          <TableRow key={member.id}>
-                            <TableCell className="font-medium text-slate-500 text-xs">{member.id}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-3">
-                                <Avatar className="h-8 w-8 bg-indigo-50 text-indigo-700">
-                                  <AvatarFallback className="text-xs">{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium text-slate-900">{member.name}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-slate-500 text-sm">{member.phone}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-1 flex-wrap">
-                                {member.groups.map(g => (
-                                  <Badge key={g} variant="secondary" className="bg-slate-100 text-slate-600 hover:bg-slate-200 font-normal">
-                                    {g}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </TableCell>
-                            <TableCell>{getStatusBadge(member.status)}</TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-medium">
-                                View Profile
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+            {/* Tabs */}
+            <div>
+              <div className="flex items-center gap-0 border-b border-gray-200">
+                {(["requests", "groups", "members"] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`relative px-4 py-2.5 text-[13px] font-medium transition-colors ${
+                      activeTab === tab ? "text-gray-900" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {tab === "requests" ? "Pending Requests" : tab === "groups" ? "Group Management" : "Member Management"}
+                    {tab === "requests" && (
+                      <span className="ml-1.5 text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">3</span>
+                    )}
+                    {activeTab === tab && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-indigo-600 rounded-t" />
+                    )}
+                  </button>
+                ))}
+              </div>
 
+              <div className="mt-5">
+
+                {/* Pending Requests */}
+                {activeTab === "requests" && (
+                  <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+                    <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+                      <h3 className="text-[14px] font-semibold text-gray-900">Action Required</h3>
+                      <span className="text-[12px] text-gray-400">{pendingRequests.length} requests</span>
+                    </div>
+                    {/* Header row */}
+                    <div className="grid px-5 py-2.5 bg-gray-50/70 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider"
+                      style={{ gridTemplateColumns: "1.5fr 1.5fr 1fr 6rem 9rem" }}>
+                      <span>Member</span>
+                      <span>Request Type</span>
+                      <span>Details</span>
+                      <span className="text-right">Amount</span>
+                      <span className="text-right">Actions</span>
+                    </div>
+                    {pendingRequests.map(req => (
+                      <div key={req.id} className="grid px-5 py-3.5 border-b border-gray-100 last:border-b-0 items-center hover:bg-gray-50/40 transition-colors"
+                        style={{ gridTemplateColumns: "1.5fr 1.5fr 1fr 6rem 9rem" }}>
+                        <div className="flex items-center gap-2.5">
+                          <Avatar className="h-7 w-7 border border-gray-100">
+                            <AvatarFallback className="bg-indigo-50 text-indigo-600 text-[10px] font-semibold">{req.initials}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-[13px] font-medium text-gray-900">{req.name}</span>
+                        </div>
+                        <span className="text-[13px] text-gray-600">{req.type}</span>
+                        <span className="text-[13px] text-gray-400">{req.details}</span>
+                        <span className="text-right text-[13px] font-semibold text-gray-800 tabular-nums">{req.amount ?? "—"}</span>
+                        <div className="flex justify-end items-center gap-1.5">
+                          <button className="h-7 px-2.5 flex items-center gap-1 text-[12px] font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-md transition-colors">
+                            <Check size={12} />Approve
+                          </button>
+                          <button className="h-7 px-2.5 flex items-center gap-1 text-[12px] font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors">
+                            <X size={12} />Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Group Management */}
+                {activeTab === "groups" && (
+                  <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+                    <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+                      <h3 className="text-[14px] font-semibold text-gray-900">All Groups</h3>
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-gray-400" />
+                        <input placeholder="Search groups..." className="h-8 w-52 pl-8 pr-3 text-[13px] border border-gray-200 rounded-lg bg-gray-50 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-all" />
+                      </div>
+                    </div>
+                    <div className="grid px-5 py-2.5 bg-gray-50/70 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider"
+                      style={{ gridTemplateColumns: "5rem 1fr 7rem 6rem 6rem 3rem" }}>
+                      <span>ID</span><span>Name</span><span>Chit Value</span><span>Members</span><span>Status</span><span></span>
+                    </div>
+                    {groups.map(g => (
+                      <div key={g.id} className="grid px-5 py-3.5 border-b border-gray-100 last:border-b-0 items-center hover:bg-gray-50/40 transition-colors text-[13px]"
+                        style={{ gridTemplateColumns: "5rem 1fr 7rem 6rem 6rem 3rem" }}>
+                        <span className="text-gray-400 font-medium">{g.id}</span>
+                        <span className="font-medium text-gray-900">{g.name}</span>
+                        <span className="font-semibold text-gray-800 tabular-nums">{g.chitValue}</span>
+                        <span className="text-gray-500">{g.members}</span>
+                        <StatusPill status={g.status} />
+                        <button className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+                          <MoreHorizontal size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Member Management */}
+                {activeTab === "members" && (
+                  <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+                    <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+                      <h3 className="text-[14px] font-semibold text-gray-900">Member Directory</h3>
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-gray-400" />
+                        <input placeholder="Search by name or ID..." className="h-8 w-64 pl-8 pr-3 text-[13px] border border-gray-200 rounded-lg bg-gray-50 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-all" />
+                      </div>
+                    </div>
+                    <div className="grid px-5 py-2.5 bg-gray-50/70 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider"
+                      style={{ gridTemplateColumns: "5rem 1fr 9rem 9rem 5rem 5rem" }}>
+                      <span>ID</span><span>Name</span><span>Contact</span><span>Groups</span><span>Status</span><span></span>
+                    </div>
+                    {members.map(m => (
+                      <div key={m.id} className="grid px-5 py-3 border-b border-gray-100 last:border-b-0 items-center hover:bg-gray-50/40 transition-colors text-[13px]"
+                        style={{ gridTemplateColumns: "5rem 1fr 9rem 9rem 5rem 5rem" }}>
+                        <span className="text-gray-400 font-medium text-[11px]">{m.id}</span>
+                        <div className="flex items-center gap-2.5">
+                          <Avatar className="h-6 w-6 shrink-0">
+                            <AvatarFallback className="bg-indigo-50 text-indigo-600 text-[9px] font-semibold">{m.initials}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium text-gray-900">{m.name}</span>
+                        </div>
+                        <span className="text-gray-500 text-[12px]">{m.phone}</span>
+                        <div className="flex flex-wrap gap-1">
+                          {m.groups.map(g => (
+                            <span key={g} className="text-[11px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{g}</span>
+                          ))}
+                        </div>
+                        <StatusPill status={m.status} />
+                        <button className="text-[12px] font-medium text-indigo-600 hover:text-indigo-700 hover:underline">
+                          View
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              </div>
+            </div>
           </div>
         </div>
-      </main>
+      </div>
+    </div>
+  );
+}
+
+function SideItem({ icon, label, active }: { icon: React.ReactNode; label: string; active?: boolean }) {
+  return (
+    <a href="#" className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium transition-colors ${
+      active ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+    }`}>
+      {icon}{label}
+    </a>
+  );
+}
+
+function StatCard({ label, value, sub, accent, warn }: { label: string; value: string; sub: string; accent?: boolean; warn?: boolean }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] px-5 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">{label}</p>
+      <p className={`text-[26px] font-bold tabular-nums leading-none ${accent ? "text-indigo-600" : warn ? "text-amber-600" : "text-gray-900"}`}>{value}</p>
+      <p className="text-[12px] text-gray-400 mt-2">{sub}</p>
     </div>
   );
 }
