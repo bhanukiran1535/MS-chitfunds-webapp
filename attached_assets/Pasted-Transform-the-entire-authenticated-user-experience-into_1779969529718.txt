@@ -1,0 +1,226 @@
+Transform the entire authenticated user experience into an enterprise-grade SaaS application with a polished, premium, and highly intuitive UX.
+
+Current dashboard is functional, but the product should now feel production-ready at the level of modern platforms like Linear, Notion, Stripe, Vercel, Framer, and Ramp.
+
+This is NOT a simple UI refresh.
+This is a complete UX enhancement across ALL user-facing pages.
+
+## Core Objective
+
+Redesign and enhance:
+
+* User Dashboard
+* Sidebar / Navigation
+* Topbar
+* Profile & Settings
+* Authentication-related screens
+* Tables & Data Views
+* Forms
+* Empty States
+* Loading States
+* Notifications
+* Analytics / Metrics Sections
+* Detail Pages
+* Modals / Drawers
+* Search Experience
+* Mobile Responsiveness
+* User Flows between pages
+
+The experience should feel:
+
+* Enterprise-grade
+* Minimal but powerful
+* Fast and fluid
+* Consistent
+* Premium
+* Highly usable
+* Visually balanced
+* Modern SaaS standard
+
+Do NOT blindly keep the existing layout.
+Feel free to completely restructure layouts, navigation, hierarchy, spacing, and component patterns if it improves usability and product quality.
+
+## Design Direction
+
+Match the visual identity and theme of the landing page so the transition from marketing → product feels seamless.
+
+The application should have:
+
+* Strong visual hierarchy
+* Clean typography
+* Spacious layouts
+* Smart use of cards
+* Proper spacing system
+* Consistent border radius
+* Soft shadows
+* Elegant hover states
+* Smooth transitions and micro-interactions
+* Clear active states
+* Excellent readability
+* Refined color usage
+* Enterprise-level polish
+
+Avoid:
+
+* Random gradients everywhere
+* Overcrowded dashboards
+* Generic template feel
+* Inconsistent paddings/margins
+* Unnecessary animations
+* Excessive glassmorphism
+* Poor contrast
+* UI clutter
+
+## UX Standards to Follow
+
+Research and follow modern industry standards from:
+
+* Linear
+* Vercel
+* Stripe Dashboard
+* Notion
+* GitHub
+* Framer
+* Slack
+* Ramp
+* Raycast
+* Airtable
+
+Design decisions must be intentional and backed by strong UX reasoning — not random aesthetics.
+
+## Dashboard Expectations
+
+The dashboard should:
+
+* Prioritize the most important actions
+* Surface meaningful insights immediately
+* Reduce cognitive load
+* Support fast scanning
+* Maintain clean information density
+* Work beautifully on large screens and laptops
+* Scale gracefully on tablets/mobile
+
+Include:
+
+* Better section grouping
+* Smarter card layouts
+* Improved data hierarchy
+* Context-aware actions
+* Sticky navigation where useful
+* Elegant analytics widgets
+* Proper responsive grid system
+
+## Component System
+
+Create a consistent reusable design system:
+
+* Buttons
+* Inputs
+* Dropdowns
+* Tables
+* Dialogs
+* Tooltips
+* Badges
+* Tabs
+* Navigation items
+* Cards
+* Charts
+* Toasts
+* Skeleton loaders
+
+Everything should feel unified.
+
+## Motion & Interaction
+
+Add subtle premium interactions:
+
+* Smooth hover transitions
+* Skeleton loading states
+* Page transitions
+* Animated counters/charts where appropriate
+* Interactive feedback on actions
+* Refined modal animations
+
+Animations should improve UX — never distract.
+
+## Navigation Improvements
+
+Rethink navigation architecture if necessary:
+
+* Better sidebar grouping
+* Quick actions
+* Global search/command palette
+* Recent activity access
+* Better breadcrumbs
+* Faster task completion
+
+Navigation should feel effortless.
+
+## Mobile Experience
+
+Mobile UX should NOT feel like a compressed desktop layout.
+
+Ensure:
+
+* Responsive navigation
+* Touch-friendly spacing
+* Optimized tables/cards
+* Simplified flows on smaller screens
+* Performance-focused rendering
+
+## Engineering Expectations
+
+Implement using scalable frontend architecture:
+
+* Reusable components
+* Clean state management
+* Modular structure
+* Proper loading/error handling
+* Accessibility best practices
+* Keyboard navigation support
+* Optimized rendering performance
+
+Maintain:
+
+* Clean codebase
+* Scalable patterns
+* Maintainability
+* Component consistency
+
+## Accessibility
+
+Ensure:
+
+* Proper contrast ratios
+* Keyboard accessibility
+* Focus states
+* Semantic structure
+* Screen-reader-friendly components
+* Accessible forms/dialogs
+
+## Final Goal
+
+The product should feel like a serious, premium SaaS platform that users immediately trust.
+
+Every page should feel:
+
+* intentional
+* refined
+* cohesive
+* performant
+* modern
+* enterprise-ready
+
+Do not make superficial visual changes only.
+
+Focus heavily on:
+
+1. User experience
+2. Information architecture
+3. Visual hierarchy
+4. Consistency
+5. Product polish
+6. Responsiveness
+7. Scalability
+
+Think like a senior product designer + senior frontend architect building a world-class B2B SaaS product.
