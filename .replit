@@ -48,18 +48,20 @@ outputType = "webview"
 name = "Backend API"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev --prefix Backend"
-waitForPort = 3000
-
 [workflows.workflow.metadata]
 outputType = "console"
 
-[[ports]]
-localPort = 5000
-externalPort = 80
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd Backend && npm run dev"
+waitForPort = 3000
 
 [[ports]]
 localPort = 3000
 externalPort = 3000
+exposeLocalhost = true
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["bash", "-c", "cd Backend && node server.js"]
+build = ["bash", "-c", "cd frontend && npm install && npm run build && cd ../Backend && npm install"]
