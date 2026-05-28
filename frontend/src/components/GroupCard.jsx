@@ -1,107 +1,112 @@
-import { Calendar, DollarSign, Users, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './GroupCard.css';
+
+const STATUS = {
+  upcoming: { dot: 'bg-gray-300',    label: 'Upcoming', text: 'text-gray-500'    },
+  pending:  { dot: 'bg-amber-400',   label: 'Pending',  text: 'text-amber-700'   },
+  paid:     { dot: 'bg-emerald-500', label: 'Paid',     text: 'text-emerald-700' },
+  due:      { dot: 'bg-red-500',     label: 'Due Now',  text: 'text-red-700'     },
+  completed:{ dot: 'bg-indigo-400',  label: 'Completed',text: 'text-indigo-600'  },
+};
 
 export const GroupCard = ({ group }) => {
   const navigate = useNavigate();
 
-  const getStatusClass = (status) => {
-    switch (status) {
-      case 'upcoming': return 'status-upcoming';
-      case 'pending': return 'status-pending';
-      case 'paid': return 'status-paid';
-      case 'due': return 'status-due';
-      default: return 'status-default';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'upcoming': return 'Upcoming';
-      case 'pending': return 'Payment Pending';
-      case 'paid': return 'Paid';
-      case 'due': return 'Payment Due';
-      default: return 'Unknown';
-    }
-  };
-
   const getGroupStatus = () => {
-    if (group.groupStatus === 'completed' || group.status === 'completed') {
-      return 'completed';
-    }
-    if (group.groupStatus) {
-      return group.groupStatus;
-    }
-    return 'active';
+    if (group.groupStatus === 'completed' || group.status === 'completed') return 'completed';
+    return group.groupStatus || 'active';
   };
 
   const groupStatus = getGroupStatus();
   const isCompleted = groupStatus === 'completed';
-  const statusClass = isCompleted ? 'status-completed' : getStatusClass(group.myPaymentStatus);
-  const statusText = isCompleted ? 'Completed' : getStatusText(group.myPaymentStatus);
+  const payStatus = isCompleted ? 'completed' : (group.myPaymentStatus || 'upcoming');
+  const s = STATUS[payStatus] || STATUS.upcoming;
+
   const progressValue = Math.min(group.currentMonth || 0, group.tenure || 0);
-  const displayProgress = isCompleted ? `${group.tenure}/${group.tenure}` : `${progressValue}/${group.tenure}`;
-  const actionType = isCompleted ? 'secondary' : (group.myPaymentStatus === 'due' || group.myPaymentStatus === 'pending' ? 'primary' : 'secondary');
-  const actionLabel = isCompleted ? 'View Details' : (group.myPaymentStatus === 'due' || group.myPaymentStatus === 'pending' ? 'Pay Now' : 'View Details');
+  const progressPct = group.tenure ? Math.round((progressValue / group.tenure) * 100) : 0;
 
-  const startMonth = new Date(group.startMonth).toLocaleString('default', {
-    month: 'long',
-    year: 'numeric'
-  });
+  const startMonth = group.startMonth
+    ? new Date(group.startMonth).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
+    : '—';
 
-  const handleDetailsClick = () => {
+  const monthlyShare = group.shareAmount && group.tenure
+    ? Math.round(group.shareAmount / group.tenure)
+    : 0;
+
+  const actionLabel = isCompleted
+    ? 'View Details'
+    : (payStatus === 'due' || payStatus === 'pending' ? 'Pay Now' : 'View Details');
+
+  const isPrimary = !isCompleted && (payStatus === 'due' || payStatus === 'pending');
+
+  const handleClick = () => {
     navigate(`/user/group/${group._id}/details`, { state: { group } });
   };
+
   return (
-    <div className={`group-card${isCompleted ? ' completed' : ''}`}>
-      {isCompleted && <div className="completed-stamp">Completed</div>}
-      <div className="card-header">
-        <div className="card-title-section">
-          <h3 className="card-title">Group {group.groupNo}</h3>
-          <p className="card-subtitle">Started: {startMonth}</p>
-        </div>
-        <div className={`status-badge ${statusClass}`}>
-          {statusText}
+    <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] flex flex-col hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition-shadow">
+      <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Group No.</p>
+            <p className="text-[22px] font-bold text-gray-900 leading-none">{group.groupNo}</p>
+            <p className="text-[11px] text-gray-400 mt-1">Started {startMonth}</p>
+          </div>
+          <span className={`inline-flex items-center gap-1.5 text-[12px] font-semibold ${s.text}`}>
+            <span className={`w-[7px] h-[7px] rounded-full shrink-0 ${s.dot}`} />
+            {s.label}
+          </span>
         </div>
       </div>
 
-      <div className="card-content">
-        <div className="info-grid">
-          <div className="info-item">
-            <DollarSign className="info-icon green" />
-            <span className="info-label">Value:</span>
-            <span className="info-value">₹{group.shareAmount.toLocaleString()}</span>
+      <div className="px-5 py-4 flex-1 space-y-3">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+          <div>
+            <p className="text-[11px] text-gray-400 mb-0.5">Chit Value</p>
+            <p className="text-[14px] font-semibold text-gray-900">₹{(group.shareAmount || 0).toLocaleString()}</p>
           </div>
-
-          <div className="info-item">
-            <Calendar className="info-icon blue" />
-            <span className="info-label">Tenure:</span>
-            <span className="info-value">{group.tenure} months</span>
+          <div>
+            <p className="text-[11px] text-gray-400 mb-0.5">Monthly Share</p>
+            <p className="text-[14px] font-semibold text-gray-900">₹{monthlyShare.toLocaleString()}</p>
           </div>
-
-          <div className="info-item">
-            <Clock className="info-icon orange" />
-            <span className="info-label">Progress:</span>
-            <span className="info-value">{displayProgress}</span>
+          <div>
+            <p className="text-[11px] text-gray-400 mb-0.5">Tenure</p>
+            <p className="text-[14px] font-semibold text-gray-900">{group.tenure} months</p>
           </div>
-
-          <div className="info-item">
-            <Calendar className="info-icon purple" />
-            <span className="info-label">Payout Month:</span>
-            <span className="info-value">
+          <div>
+            <p className="text-[11px] text-gray-400 mb-0.5">Payout Month</p>
+            <p className="text-[14px] font-semibold text-gray-900">
               {group.preBookedMonth ? group.preBookedMonth : 'Not Claimed'}
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex justify-between text-[12px] mb-1.5">
+            <span className="text-gray-400">Progress</span>
+            <span className="font-semibold text-indigo-600">
+              {progressValue}/{group.tenure}
             </span>
           </div>
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-indigo-500 rounded-full transition-all"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
         </div>
+      </div>
 
-        <div className="card-actions">
-          <button
-            className={`action-btn ${actionType}`}
-            onClick={handleDetailsClick}
-          >
-            {actionLabel}
-          </button>
-        </div>
+      <div className="px-5 pb-5">
+        <button
+          onClick={handleClick}
+          className={`w-full py-2 rounded-lg text-[13px] font-semibold transition-colors ${
+            isPrimary
+              ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          {actionLabel}
+        </button>
       </div>
     </div>
   );
