@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Plus, X, ArrowRight } from 'lucide-react';
 
 const chitValues = [50000, 100000, 200000, 500000];
 
@@ -6,58 +7,16 @@ export const ChitValueBanner = () => {
   const [filteredChits, setFilteredChits] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
   const [customAmount, setCustomAmount] = useState('');
-
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/group/status/upcoming`, {
-      credentials: 'include',
-    })
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        if (data.success) {
-          const upcomingGroups = data.groups;
-
-          const filtered = chitValues
-            .map(val => {
-              const group = upcomingGroups
-                .filter(g => g.chitValue >= val)
-                .sort((a, b) => new Date(a.startMonth) - new Date(b.startMonth))[0];
-
-              if (!group) return null;
-
-              return {
-                chitValue: val,
-                tenure: group.tenure,
-                startMonth: new Date(group.startMonth).toLocaleString('default', {
-                  month: 'long',
-                  year: 'numeric',
-                }),
-              };
-            })
-            .filter(Boolean);
-
-          setFilteredChits(filtered);
-        }
-      });
-  }, []);
+  const [customAmountStr, setCustomAmountStr] = useState('');
+  const API = import.meta.env.VITE_API_BASE_URL;
 
   const fetchData = async () => {
     try {
       const [groupsRes, requestsRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/group/status/upcoming`, {
-          credentials: 'include',
-        }),
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/request/my`, {
-          credentials: 'include',
-        })
+        fetch(`${API}/group/status/upcoming`, { credentials: 'include' }),
+        fetch(`${API}/request/my`, { credentials: 'include' }),
       ]);
-
-      const [groupsData, requestsData] = await Promise.all([
-        groupsRes.json(),
-        requestsRes.json()
-      ]);
+      const [groupsData, requestsData] = await Promise.all([groupsRes.json(), requestsRes.json()]);
 
       if (groupsData.success) {
         const upcomingGroups = groupsData.groups;
@@ -66,16 +25,11 @@ export const ChitValueBanner = () => {
             const group = upcomingGroups
               .filter(g => g.chitValue >= val)
               .sort((a, b) => new Date(a.startMonth) - new Date(b.startMonth))[0];
-
             if (!group) return null;
-
             return {
               chitValue: val,
               tenure: group.tenure,
-              startMonth: new Date(group.startMonth).toLocaleString('default', {
-                month: 'long',
-                year: 'numeric',
-              }),
+              startMonth: new Date(group.startMonth).toLocaleString('default', { month: 'long', year: 'numeric' }),
             };
           })
           .filter(Boolean);
@@ -89,91 +43,91 @@ export const ChitValueBanner = () => {
         setMyRequests(joinRequests);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching chit data:', error);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const requestToJoin = async (amount) => {
-    console.log('Request to Join clicked for amount:', amount); // Debug log
-    const confirm = window.confirm(`Are you sure you want to request a ₹${amount.toLocaleString()} chit?`);
-    if (!confirm) return;
+    if (!window.confirm(`Request a ₹${Number(amount).toLocaleString()} chit?`)) return;
     try {
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/request/join`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ amount }),
-    });
-    const data = await res.json();
-    alert(data.message || 'Request submitted.');
-    if (data.success) {
-      setMyRequests(prev => [...prev, amount]);
-      } else {
-        console.error('Join request failed:', data);
-      }
+      const res = await fetch(`${API}/request/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ amount }),
+      });
+      const data = await res.json();
+      alert(data.message || 'Request submitted.');
+      if (data.success) setMyRequests(prev => [...prev, amount]);
     } catch (err) {
-      console.error('Error sending join request:', err);
-      alert('Error sending join request. See console for details.');
+      alert('Error sending join request.');
     }
   };
 
   const withdrawRequest = async (amount) => {
-    console.log('Withdraw Request clicked for amount:', amount); // Debug log
-    const confirm = window.confirm(`Withdraw your request for ₹${amount.toLocaleString()}?`);
-    if (!confirm) return;
+    if (!window.confirm(`Withdraw your request for ₹${Number(amount).toLocaleString()}?`)) return;
     try {
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/request/withdraw`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ amount, type: 'join_group' }),
-    });
-    const data = await res.json();
-    alert(data.message || 'Request withdrawn.');
-    if (data.success) {
-      setMyRequests(prev => prev.filter(a => a !== amount));
-      } else {
-        console.error('Withdraw request failed:', data);
-      }
+      const res = await fetch(`${API}/request/withdraw`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ amount, type: 'join_group' }),
+      });
+      const data = await res.json();
+      alert(data.message || 'Request withdrawn.');
+      if (data.success) setMyRequests(prev => prev.filter(a => a !== amount));
     } catch (err) {
-      console.error('Error withdrawing request:', err);
-      alert('Error withdrawing request. See console for details.');
+      alert('Error withdrawing request.');
     }
   };
 
+  if (filteredChits.length === 0) return null;
+
   return (
-    <div className="upcoming-banner">
-      <div className="banner-title">Available Chit Values</div>
-      <div className="banner-slider">
+    <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+      <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <h3 className="text-[14px] font-semibold text-gray-900">Available to Join</h3>
+          <p className="text-[12px] text-gray-400 mt-0.5">Upcoming chit groups open for new members</p>
+        </div>
+      </div>
+
+      <div className="flex gap-3 overflow-x-auto px-5 py-4 scrollbar-none">
         {filteredChits.map((item, index) => {
-          const alreadyRequested = myRequests.includes(item.chitValue);
-
+          const requested = myRequests.includes(item.chitValue);
           return (
-            <div className="banner-card" key={index}>
-              <h3>₹{item.chitValue.toLocaleString()}</h3>
-              <p>Tenure: {item.tenure} months</p>
-              <p>Start: {item.startMonth}</p>
-
-              {alreadyRequested ? (
-                <>
-                  <button className="join-btn" disabled>Request Sent</button>
+            <div
+              key={index}
+              className="shrink-0 w-44 bg-gray-50 border border-gray-200/80 rounded-xl px-4 py-3.5 flex flex-col gap-3"
+            >
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Chit Value</p>
+                <p className="text-[18px] font-bold text-gray-900 tabular-nums">₹{item.chitValue.toLocaleString()}</p>
+              </div>
+              <div className="space-y-1 text-[12px] text-gray-500">
+                <p>{item.tenure} months · {item.startMonth}</p>
+              </div>
+              {requested ? (
+                <div className="space-y-1.5">
+                  <div className="w-full py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-semibold rounded-md text-center">
+                    Request Sent
+                  </div>
                   <button
-                    className="join-btn"
-                    style={{ background: '#ef4444', margin: '0.4rem' }}
                     onClick={() => withdrawRequest(item.chitValue)}
+                    className="w-full py-1.5 bg-white border border-red-200 text-red-600 text-[12px] font-semibold rounded-md hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
                   >
-                    Withdraw Request
+                    <X size={11} />
+                    Withdraw
                   </button>
-                </>
+                </div>
               ) : (
                 <button
-                  className="join-btn"
                   onClick={() => requestToJoin(item.chitValue)}
+                  className="w-full py-1.5 bg-indigo-600 text-white text-[12px] font-semibold rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1"
                 >
+                  <Plus size={11} />
                   Request to Join
                 </button>
               )}
@@ -181,41 +135,47 @@ export const ChitValueBanner = () => {
           );
         })}
 
-        {/* ✅ Custom Amount Banner */}
-        <div className="banner-card flex flex-col">
-          <h3>Custom Chit Amount</h3>
+        {/* Custom amount card */}
+        <div className="shrink-0 w-52 bg-gray-50 border border-gray-200/80 border-dashed rounded-xl px-4 py-3.5 flex flex-col gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Custom Amount</p>
+            <p className="text-[13px] text-gray-500">Request any chit value</p>
+          </div>
           <input
             type="number"
-            placeholder="Enter Amount (e.g. 600000)"
-            value={customAmount}
-            onChange={(e) => setCustomAmount(Number(e.target.value))}
-            className="px-3 py-2 border border-gray-300 rounded-lg mb-2"
+            placeholder="e.g. 600000"
+            value={customAmountStr}
+            onChange={e => { setCustomAmountStr(e.target.value); setCustomAmount(Number(e.target.value)); }}
+            className="px-3 py-2 text-[13px] border border-gray-200 rounded-lg bg-white text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
-
           {myRequests.includes(customAmount) ? (
-            <>
-              <button className="join-btn" disabled>Request Sent</button>
+            <div className="space-y-1.5">
+              <div className="w-full py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-semibold rounded-md text-center">
+                Request Sent
+              </div>
               <button
-                className="join-btn"
-                style={{ background: '#ef4444', margin: '0.4rem' }}
                 onClick={() => withdrawRequest(customAmount)}
+                className="w-full py-1.5 bg-white border border-red-200 text-red-600 text-[12px] font-semibold rounded-md hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
               >
-                Withdraw Request
+                <X size={11} />
+                Withdraw
               </button>
-            </>
+            </div>
           ) : (
             <button
-              className="join-btn"
               onClick={() => {
                 if (customAmount >= 10000) {
                   requestToJoin(customAmount);
+                  setCustomAmountStr('');
                   setCustomAmount('');
                 } else {
                   alert('Please enter a valid amount (₹10,000 or more).');
                 }
               }}
+              className="w-full py-1.5 bg-indigo-600 text-white text-[12px] font-semibold rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1.5"
             >
-              Request Custom Amount
+              <ArrowRight size={11} />
+              Request Amount
             </button>
           )}
         </div>
