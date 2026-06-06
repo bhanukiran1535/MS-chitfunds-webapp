@@ -214,9 +214,9 @@ export const UserDashboard = ({ user }) => {
       activeView={activeTab}
       onNavClick={handleNavClick}
     >
-      <div className="max-w-5xl mx-auto px-7 py-8 space-y-7 pb-20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-7 py-6 sm:py-8 space-y-6 sm:space-y-7 pb-24 md:pb-20">
         <div>
-          <h1 className="text-[22px] font-semibold text-gray-900 tracking-tight">
+          <h1 className="text-[20px] sm:text-[22px] font-semibold text-gray-900 tracking-tight">
             Welcome back, {firstName}
           </h1>
           <p className="text-[13px] text-gray-500 mt-0.5">
@@ -255,7 +255,7 @@ export const UserDashboard = ({ user }) => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative px-4 py-2.5 text-[13px] font-medium transition-colors ${
+                className={`relative px-3 sm:px-4 py-2.5 text-[13px] font-medium transition-colors whitespace-nowrap min-h-[44px] ${
                   activeTab === tab.id ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -296,7 +296,7 @@ export const UserDashboard = ({ user }) => {
             {activeTab === 'activity' && (
               <div className="space-y-5">
                 {/* Summary cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="bg-white rounded-xl border border-gray-200/80 px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Total Paid</p>
                     <p className="text-[24px] font-bold text-gray-900 tabular-nums">₹{totalAmountPaid.toLocaleString()}</p>

@@ -14,7 +14,7 @@ const LabeledField = ({ label, children }) => (
 const Input = (props) => (
   <input
     {...props}
-    className="w-full px-3 py-2 text-[13px] border border-gray-200 rounded-lg bg-white text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-400"
+    className="w-full px-3 py-2.5 text-[14px] sm:text-[13px] border border-gray-200 rounded-lg bg-white text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-400"
   />
 );
 
@@ -113,15 +113,15 @@ export const AccountSettingsModal = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
       onClick={handleClose}
       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
     >
       <div
-        className="relative bg-white rounded-2xl border border-gray-200/80 shadow-[0_16px_48px_rgba(0,0,0,0.14)] w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
+        className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl border border-gray-200/80 shadow-[0_16px_48px_rgba(0,0,0,0.14)] sm:max-w-lg sm:mx-4 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex items-start justify-between">
+        <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-gray-100 flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-700 text-[13px] font-semibold shrink-0">
               {initials}
@@ -131,14 +131,14 @@ export const AccountSettingsModal = ({ isOpen, onClose }) => {
               <p className="text-[12px] text-gray-400">{user.email}</p>
             </div>
           </div>
-          <button onClick={handleClose} className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+          <button onClick={handleClose} className="h-9 w-9 sm:h-7 sm:w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
             <X size={15} />
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-5">
+        <div className="px-5 sm:px-6 py-5 space-y-5">
           {/* Read-only profile info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <LabeledField label="Full Name">
               <Input type="text" value={displayName} disabled />
             </LabeledField>
@@ -161,7 +161,7 @@ export const AccountSettingsModal = ({ isOpen, onClose }) => {
             <button
               type="submit"
               disabled={isSaving}
-              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-[13px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 text-white text-[13px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60 min-h-[44px]"
             >
               <CheckCircle size={13} />
               {isSaving ? 'Saving…' : 'Save preferences'}
@@ -175,7 +175,7 @@ export const AccountSettingsModal = ({ isOpen, onClose }) => {
               <LabeledField label="Current Password">
                 <Input type="password" placeholder="••••••••" value={passwordData.currentPassword} onChange={e => setPasswordData(p => ({ ...p, currentPassword: e.target.value }))} />
               </LabeledField>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <LabeledField label="New Password">
                   <Input type="password" placeholder="••••••••" value={passwordData.newPassword} onChange={e => setPasswordData(p => ({ ...p, newPassword: e.target.value }))} />
                 </LabeledField>
@@ -191,7 +191,7 @@ export const AccountSettingsModal = ({ isOpen, onClose }) => {
             <button
               type="submit"
               disabled={passwordLoading}
-              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-[13px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 text-white text-[13px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60 min-h-[44px]"
             >
               <Shield size={13} />
               {passwordLoading ? 'Updating…' : 'Change password'}

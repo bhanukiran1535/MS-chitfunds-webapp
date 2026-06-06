@@ -130,7 +130,7 @@ export const MemberManagement = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
         <div className="flex-1 relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -138,25 +138,28 @@ export const MemberManagement = () => {
             placeholder="Search by name, email, or alias…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-[13px] bg-white border border-gray-200 rounded-lg text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full pl-9 pr-4 py-2.5 text-[14px] sm:text-[13px] bg-white border border-gray-200 rounded-lg text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
         </div>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="py-2 px-3 text-[13px] bg-white border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        >
-          <option value="all">All Users</option>
-          <option value="active">With Active Groups</option>
-          <option value="completed">Completed Only</option>
-        </select>
-        <button
-          onClick={exportMemberData}
-          className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-700 text-[13px] font-semibold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
-        >
-          <Download size={13} />
-          Export CSV
-        </button>
+        <div className="flex gap-2">
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="flex-1 sm:flex-none py-2.5 px-3 text-[13px] bg-white border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 min-h-[44px] sm:min-h-0"
+          >
+            <option value="all">All Users</option>
+            <option value="active">With Active Groups</option>
+            <option value="completed">Completed Only</option>
+          </select>
+          <button
+            onClick={exportMemberData}
+            className="flex items-center gap-1.5 px-3 py-2.5 bg-white border border-gray-200 text-gray-700 text-[13px] font-semibold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap min-h-[44px] sm:min-h-0"
+          >
+            <Download size={13} />
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">Export</span>
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
@@ -175,96 +178,184 @@ export const MemberManagement = () => {
             <p className="text-[13px] text-gray-400">No users found matching your criteria.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/70">
-                  <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">User</th>
-                  <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Alias</th>
-                  <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Groups</th>
-                  <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Active</th>
-                  <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Total Investment</th>
-                  <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.userId._id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/40 transition-colors">
-                    <td className="px-5 py-3.5">
-                      <p className="font-semibold text-gray-800">{user.userId.firstName} {user.userId.lastName}</p>
+          <>
+            {/* Mobile card list */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {filteredUsers.map((user) => (
+                <div key={user.userId._id} className="px-4 py-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-800 text-[14px]">{user.userId.firstName} {user.userId.lastName}</p>
                       <p className="text-[12px] text-gray-400">{user.userId.email}</p>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      {editingAliasUserId === user.userId._id ? (
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            className="px-2 py-1 text-[12px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-28"
-                            value={aliasDraft}
-                            onChange={(e) => setAliasDraft(e.target.value)}
-                            placeholder="Enter alias"
-                          />
-                          <button
-                            type="button"
-                            disabled={aliasSaving}
-                            onClick={() => saveAlias(user.userId._id)}
-                            className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-                          >
-                            <Check size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => { setEditingAliasUserId(null); setAliasDraft(''); setAliasError(''); }}
-                            className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
-                          >
-                            <X size={14} />
-                          </button>
-                          {aliasError && <span className="text-[11px] text-red-500">{aliasError}</span>}
-                        </div>
-                      ) : (
-                        <span className={user.userId.alias ? 'text-gray-700' : 'text-gray-300 italic'}>
-                          {user.userId.alias || (user.userId.isAdmin ? '—' : 'No alias')}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 text-gray-700">{user.totalGroups}</td>
-                    <td className="px-5 py-3.5">
-                      <span className={`font-semibold ${user.activeGroups > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
-                        {user.activeGroups}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 font-semibold text-gray-900">
-                      ₹{user.totalInvestment.toLocaleString()}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2">
-                        {editingAliasUserId !== user.userId._id && !user.userId.isAdmin && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingAliasUserId(user.userId._id);
-                              setAliasDraft(user.userId.alias || `${user.userId.firstName} ${user.userId.lastName}`);
-                              setAliasError('');
-                            }}
-                            className="flex items-center gap-1 px-2.5 py-1 bg-white border border-gray-200 text-gray-700 text-[12px] font-semibold rounded-md hover:bg-gray-50 transition-colors"
-                          >
-                            <Edit2 size={11} />
-                            Alias
-                          </button>
-                        )}
-                        <button
-                          onClick={() => navigate(`/admin/user/${user.userId._id}/groups`)}
-                          className="flex items-center gap-1 px-2.5 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[12px] font-semibold rounded-md hover:bg-indigo-100 transition-colors"
-                        >
-                          <UserCheck size={11} />
-                          Groups
-                        </button>
-                      </div>
-                    </td>
+                    </div>
+                    <span className={`text-[12px] font-semibold ${user.activeGroups > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                      {user.activeGroups} active
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3 text-[12px]">
+                    <div>
+                      <p className="text-gray-400 mb-0.5">Alias</p>
+                      <p className={`font-medium ${user.userId.alias ? 'text-gray-700' : 'text-gray-300 italic'}`}>
+                        {user.userId.alias || 'None'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 mb-0.5">Groups</p>
+                      <p className="font-semibold text-gray-900">{user.totalGroups}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 mb-0.5">Investment</p>
+                      <p className="font-semibold text-gray-900">₹{user.totalInvestment.toLocaleString()}</p>
+                    </div>
+                  </div>
+
+                  {editingAliasUserId === user.userId._id && (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        className="flex-1 px-2.5 py-2 text-[13px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        value={aliasDraft}
+                        onChange={(e) => setAliasDraft(e.target.value)}
+                        placeholder="Enter alias"
+                      />
+                      <button
+                        type="button"
+                        disabled={aliasSaving}
+                        onClick={() => saveAlias(user.userId._id)}
+                        className="p-2 text-emerald-600 hover:bg-emerald-50 rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      >
+                        <Check size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setEditingAliasUserId(null); setAliasDraft(''); setAliasError(''); }}
+                        className="p-2 text-gray-400 hover:bg-gray-100 rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      >
+                        <X size={16} />
+                      </button>
+                      {aliasError && <span className="text-[11px] text-red-500">{aliasError}</span>}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    {editingAliasUserId !== user.userId._id && !user.userId.isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingAliasUserId(user.userId._id);
+                          setAliasDraft(user.userId.alias || `${user.userId.firstName} ${user.userId.lastName}`);
+                          setAliasError('');
+                        }}
+                        className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-white border border-gray-200 text-gray-700 text-[13px] font-semibold rounded-md hover:bg-gray-50 transition-colors min-h-[44px]"
+                      >
+                        <Edit2 size={12} />
+                        Alias
+                      </button>
+                    )}
+                    <button
+                      onClick={() => navigate(`/admin/user/${user.userId._id}/groups`)}
+                      className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[13px] font-semibold rounded-md hover:bg-indigo-100 transition-colors min-h-[44px]"
+                    >
+                      <UserCheck size={12} />
+                      Groups
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/70">
+                    <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">User</th>
+                    <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Alias</th>
+                    <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Groups</th>
+                    <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Active</th>
+                    <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Total Investment</th>
+                    <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((user) => (
+                    <tr key={user.userId._id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/40 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <p className="font-semibold text-gray-800">{user.userId.firstName} {user.userId.lastName}</p>
+                        <p className="text-[12px] text-gray-400">{user.userId.email}</p>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        {editingAliasUserId === user.userId._id ? (
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              className="px-2 py-1 text-[12px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-28"
+                              value={aliasDraft}
+                              onChange={(e) => setAliasDraft(e.target.value)}
+                              placeholder="Enter alias"
+                            />
+                            <button
+                              type="button"
+                              disabled={aliasSaving}
+                              onClick={() => saveAlias(user.userId._id)}
+                              className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                            >
+                              <Check size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setEditingAliasUserId(null); setAliasDraft(''); setAliasError(''); }}
+                              className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
+                            >
+                              <X size={14} />
+                            </button>
+                            {aliasError && <span className="text-[11px] text-red-500">{aliasError}</span>}
+                          </div>
+                        ) : (
+                          <span className={user.userId.alias ? 'text-gray-700' : 'text-gray-300 italic'}>
+                            {user.userId.alias || (user.userId.isAdmin ? '—' : 'No alias')}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 text-gray-700">{user.totalGroups}</td>
+                      <td className="px-5 py-3.5">
+                        <span className={`font-semibold ${user.activeGroups > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                          {user.activeGroups}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 font-semibold text-gray-900">
+                        ₹{user.totalInvestment.toLocaleString()}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-2">
+                          {editingAliasUserId !== user.userId._id && !user.userId.isAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingAliasUserId(user.userId._id);
+                                setAliasDraft(user.userId.alias || `${user.userId.firstName} ${user.userId.lastName}`);
+                                setAliasError('');
+                              }}
+                              className="flex items-center gap-1 px-2.5 py-1 bg-white border border-gray-200 text-gray-700 text-[12px] font-semibold rounded-md hover:bg-gray-50 transition-colors"
+                            >
+                              <Edit2 size={11} />
+                              Alias
+                            </button>
+                          )}
+                          <button
+                            onClick={() => navigate(`/admin/user/${user.userId._id}/groups`)}
+                            className="flex items-center gap-1 px-2.5 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[12px] font-semibold rounded-md hover:bg-indigo-100 transition-colors"
+                          >
+                            <UserCheck size={11} />
+                            Groups
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -17,9 +17,9 @@ const StatCard = ({ label, value, sub, color = 'default' }) => {
     emerald: 'text-emerald-600',
   }[color];
   return (
-    <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] px-5 py-4">
+    <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] px-4 sm:px-5 py-4">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">{label}</p>
-      <p className={`text-[26px] font-bold tabular-nums leading-none ${valueColor}`}>{value}</p>
+      <p className={`text-[22px] sm:text-[26px] font-bold tabular-nums leading-none ${valueColor}`}>{value}</p>
       {sub && <p className="text-[12px] text-gray-400 mt-2">{sub}</p>}
     </div>
   );
@@ -90,28 +90,30 @@ export const AdminDashboard = ({ user }) => {
 
   return (
     <AppLayout pageTitle="Admin Overview" activeView={TAB_TO_NAV[activeTab]} onNavClick={handleNavClick}>
-      <div className="max-w-6xl mx-auto px-7 py-8 space-y-7 pb-20">
-        <div className="flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 sm:px-7 py-6 sm:py-8 space-y-6 sm:space-y-7 pb-20">
+        <div className="flex items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-[22px] font-semibold text-gray-900 tracking-tight">Admin Dashboard</h1>
+            <h1 className="text-[20px] sm:text-[22px] font-semibold text-gray-900 tracking-tight">Admin Dashboard</h1>
             <p className="text-[13px] text-gray-500 mt-0.5">
               Manage groups, members and approve requests
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setShowCreateForm(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 text-white text-[13px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2.5 sm:py-2 bg-indigo-600 text-white text-[13px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors min-h-[44px] sm:min-h-0"
             >
               <Plus size={14} />
-              New Group
+              <span className="hidden sm:inline">New Group</span>
+              <span className="sm:hidden">Group</span>
             </button>
             <button
               onClick={() => setAddMemberForm(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-gray-200 text-gray-700 text-[13px] font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2.5 sm:py-2 bg-white border border-gray-200 text-gray-700 text-[13px] font-semibold rounded-lg hover:bg-gray-50 transition-colors min-h-[44px] sm:min-h-0"
             >
               <Users size={14} />
-              Add Member
+              <span className="hidden sm:inline">Add Member</span>
+              <span className="sm:hidden">Member</span>
             </button>
           </div>
         </div>
@@ -119,7 +121,7 @@ export const AdminDashboard = ({ user }) => {
         {showCreateForm && <CreateGroupForm onClose={() => setShowCreateForm(false)} />}
         {showAddMemberForm && <AddMemberForm onClose={() => setAddMemberForm(false)} />}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           <StatCard label="Total Groups" value={stats.totalGroups} sub="Active & upcoming" color="indigo" />
           <StatCard label="Total Members" value={stats.totalMembers} sub="Across all groups" color="emerald" />
           <StatCard
@@ -137,12 +139,12 @@ export const AdminDashboard = ({ user }) => {
         </div>
 
         <div>
-          <div className="flex items-center border-b border-gray-200">
+          <div className="flex items-center border-b border-gray-200 overflow-x-auto scrollbar-none">
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative px-4 py-2.5 text-[13px] font-medium transition-colors ${
+                className={`relative px-3 sm:px-4 py-2.5 text-[13px] font-medium transition-colors whitespace-nowrap min-h-[44px] ${
                   activeTab === tab.id ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >

@@ -44,12 +44,12 @@ export const ConfirmDialog = ({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40"
       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
       onClick={onCancel}
     >
       <div
-        className="bg-white rounded-2xl border border-gray-200/80 shadow-[0_16px_48px_rgba(0,0,0,0.16)] w-full max-w-sm mx-4"
+        className="bg-white w-full rounded-t-2xl sm:rounded-2xl border border-gray-200/80 shadow-[0_16px_48px_rgba(0,0,0,0.16)] sm:max-w-sm sm:mx-4"
         onClick={e => e.stopPropagation()}
       >
         <div className="p-6 space-y-4">
@@ -65,13 +65,13 @@ export const ConfirmDialog = ({
           <div className="flex gap-2.5 pt-1">
             <button
               onClick={onCancel}
-              className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 text-[13px] font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3 sm:py-2.5 bg-white border border-gray-200 text-gray-700 text-[14px] sm:text-[13px] font-semibold rounded-lg hover:bg-gray-50 transition-colors min-h-[44px]"
             >
               {cancelLabel}
             </button>
             <button
               onClick={onConfirm}
-              className={`flex-1 py-2.5 text-white text-[13px] font-semibold rounded-lg transition-colors ${primaryColor}`}
+              className={`flex-1 py-3 sm:py-2.5 text-white text-[14px] sm:text-[13px] font-semibold rounded-lg transition-colors min-h-[44px] ${primaryColor}`}
             >
               {confirmLabel}
             </button>

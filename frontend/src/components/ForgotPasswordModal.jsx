@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, CheckCircle, Mail, Key, Lock } from 'lucide-react';
+import { X, CheckCircle, Mail, Key } from 'lucide-react';
 import { apiFetch } from '../lib/api';
 
-const inputClass = "w-full px-3.5 py-2.5 text-[13px] border border-gray-200 rounded-lg bg-white text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-colors";
+const inputClass = "w-full px-3.5 py-2.5 text-[14px] sm:text-[13px] border border-gray-200 rounded-lg bg-white text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-colors";
 
 const Field = ({ label, error, children }) => (
   <div className="space-y-1.5">
@@ -62,29 +62,29 @@ export const ForgotPasswordModal = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
       onClick={handleClose}
       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
     >
       <div
-        className="bg-white rounded-2xl border border-gray-200/80 shadow-[0_16px_48px_rgba(0,0,0,0.14)] w-full max-w-sm mx-4"
+        className="bg-white w-full rounded-t-2xl sm:rounded-2xl border border-gray-200/80 shadow-[0_16px_48px_rgba(0,0,0,0.14)] sm:max-w-sm sm:mx-4"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-gray-100 flex items-center justify-between">
           <div>
             <h2 className="text-[15px] font-semibold text-gray-900">Reset Password</h2>
             <p className="text-[12px] text-gray-400 mt-0.5">
               {step === 1 ? 'Enter your email to receive an OTP' : step === 2 ? 'Enter the OTP and your new password' : 'All done!'}
             </p>
           </div>
-          <button onClick={handleClose} className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+          <button onClick={handleClose} className="h-9 w-9 sm:h-7 sm:w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
             <X size={15} />
           </button>
         </div>
 
         {/* Step indicators */}
-        <div className="flex items-center px-6 pt-4 pb-1 gap-1.5">
+        <div className="flex items-center px-5 sm:px-6 pt-4 pb-1 gap-1.5">
           {STEPS.map((label, i) => (
             <div key={label} className="flex items-center gap-1.5 flex-1">
               <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${step > i + 1 ? 'bg-emerald-500 text-white' : step === i + 1 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
@@ -96,7 +96,7 @@ export const ForgotPasswordModal = ({ isOpen, onClose }) => {
           ))}
         </div>
 
-        <div className="px-6 py-5">
+        <div className="px-5 sm:px-6 py-5">
           {/* Step 1: Email */}
           {step === 1 && (
             <form onSubmit={handleSubmit(handleSendOtp)} className="space-y-4">
@@ -107,7 +107,7 @@ export const ForgotPasswordModal = ({ isOpen, onClose }) => {
                     {...register('email', { required: 'Email is required', pattern: { value: /.+@.+\..+/, message: 'Invalid email' } })}
                     type="email"
                     placeholder="you@example.com"
-                    className="w-full pl-9 pr-4 py-2.5 text-[13px] border border-gray-200 rounded-lg bg-white placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-colors"
+                    className="w-full pl-9 pr-4 py-2.5 text-[14px] sm:text-[13px] border border-gray-200 rounded-lg bg-white placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-colors"
                   />
                 </div>
               </Field>
@@ -115,7 +115,7 @@ export const ForgotPasswordModal = ({ isOpen, onClose }) => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 bg-indigo-600 text-white text-[13px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                className="w-full py-3 sm:py-2.5 bg-indigo-600 text-white text-[14px] sm:text-[13px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60 min-h-[44px]"
               >
                 {isLoading ? 'Sending OTP…' : 'Send OTP'}
               </button>
@@ -132,7 +132,7 @@ export const ForgotPasswordModal = ({ isOpen, onClose }) => {
                   <input
                     {...register('otp', { required: 'OTP is required', minLength: { value: 6, message: 'OTP must be 6 digits' }, maxLength: { value: 6, message: 'OTP must be 6 digits' } })}
                     placeholder="6-digit code"
-                    className="w-full pl-9 pr-4 py-2.5 text-[13px] border border-gray-200 rounded-lg bg-white placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-colors tracking-widest"
+                    className="w-full pl-9 pr-4 py-2.5 text-[14px] sm:text-[13px] border border-gray-200 rounded-lg bg-white placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-colors tracking-widest"
                     maxLength={6}
                   />
                 </div>
@@ -158,14 +158,14 @@ export const ForgotPasswordModal = ({ isOpen, onClose }) => {
                   type="button"
                   onClick={() => setStep(1)}
                   disabled={isLoading}
-                  className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 text-[13px] font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-3 sm:py-2.5 bg-white border border-gray-200 text-gray-700 text-[14px] sm:text-[13px] font-semibold rounded-lg hover:bg-gray-50 transition-colors min-h-[44px]"
                 >
                   Back
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 py-2.5 bg-indigo-600 text-white text-[13px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                  className="flex-1 py-3 sm:py-2.5 bg-indigo-600 text-white text-[14px] sm:text-[13px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60 min-h-[44px]"
                 >
                   {isLoading ? 'Resetting…' : 'Reset Password'}
                 </button>

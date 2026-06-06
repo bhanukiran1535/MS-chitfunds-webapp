@@ -129,7 +129,7 @@ export const GroupCard = ({ group }) => {
       <div className="px-5 pb-5">
         <button
           onClick={handleClick}
-          className={`w-full py-2 rounded-lg text-[13px] font-semibold transition-colors ${
+          className={`w-full py-2.5 sm:py-2 rounded-lg text-[14px] sm:text-[13px] font-semibold transition-colors min-h-[44px] ${
             isCompleted
               ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
               : payStatus === 'due' || payStatus === 'pending'

@@ -157,17 +157,17 @@ export const GroupMonthManagement = () => {
   return (
     <div className="min-h-screen" style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#f7f8fa' }}>
       <header className="bg-white border-b border-gray-200/80 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-7 h-14 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-7 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 transition-colors"
+              className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 transition-colors min-h-[44px]"
             >
               <ChevronLeft size={16} />
               Back
             </button>
-            <span className="text-gray-200">|</span>
-            <h1 className="text-[14px] font-semibold text-gray-900">
+            <span className="text-gray-200 hidden sm:inline">|</span>
+            <h1 className="text-[14px] font-semibold text-gray-900 hidden sm:block">
               Group {group.groupNo} — Monthly Management
             </h1>
           </div>
@@ -178,18 +178,23 @@ export const GroupMonthManagement = () => {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-7 py-8 space-y-7 pb-20">
+      <div className="max-w-6xl mx-auto px-4 sm:px-7 py-6 sm:py-8 space-y-6 sm:space-y-7 pb-20">
+        {/* Page title on mobile */}
+        <h1 className="text-[16px] font-semibold text-gray-900 sm:hidden">
+          Group {group.groupNo} — Monthly Management
+        </h1>
+
         {/* Group summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {[
             { label: 'Chit Value', value: `₹${group.chitValue.toLocaleString()}` },
             { label: 'Members', value: group.members.length },
             { label: 'Tenure', value: `${group.tenure} months` },
             { label: 'Total Collected', value: `₹${totalCollection.toLocaleString()}` },
           ].map(card => (
-            <div key={card.label} className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] px-5 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">{card.label}</p>
-              <p className="text-[22px] font-bold tabular-nums text-gray-900">{card.value}</p>
+            <div key={card.label} className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] px-4 sm:px-5 py-3 sm:py-4">
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">{card.label}</p>
+              <p className="text-[18px] sm:text-[22px] font-bold tabular-nums text-gray-900">{card.value}</p>
             </div>
           ))}
         </div>
@@ -203,61 +208,103 @@ export const GroupMonthManagement = () => {
             </div>
           </div>
 
-          <div
-            className="grid px-5 py-2.5 bg-gray-50/70 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider"
-            style={{ gridTemplateColumns: '2.5rem 1fr 7rem 6rem 6rem 8rem' }}
-          >
-            <span>#</span>
-            <span>Month</span>
-            <span>Status</span>
-            <span>Paid</span>
-            <span>Collected</span>
-            <span className="text-right">Action</span>
-          </div>
-
-          {months.map((month, index) => {
-            const stats = calculateMonthStats(month);
-            const pct = stats.totalMembers > 0 ? Math.round((stats.paidMembers / stats.totalMembers) * 100) : 0;
-            const st = STATUS_CONFIG[month.status] || STATUS_CONFIG.upcoming;
-
-            return (
-              <div
-                key={index}
-                className={`grid px-5 py-3.5 border-b border-gray-100 last:border-b-0 items-center text-[13px] border-l-[3px] hover:bg-gray-50/40 transition-colors cursor-pointer ${st.row}`}
-                style={{ gridTemplateColumns: '2.5rem 1fr 7rem 6rem 6rem 8rem' }}
-                onClick={() => setSelectedMonth(month)}
-              >
-                <span className="text-[12px] text-gray-400 tabular-nums">{index + 1}</span>
-
-                <div>
-                  <p className="font-semibold text-gray-800">{month.monthName}</p>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <div className="h-1 w-16 bg-gray-100 rounded-full overflow-hidden">
+          {/* Mobile card list */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {months.map((month, index) => {
+              const stats = calculateMonthStats(month);
+              const pct = stats.totalMembers > 0 ? Math.round((stats.paidMembers / stats.totalMembers) * 100) : 0;
+              const st = STATUS_CONFIG[month.status] || STATUS_CONFIG.upcoming;
+              return (
+                <div
+                  key={index}
+                  className={`px-4 py-4 border-l-[3px] ${st.row} cursor-pointer`}
+                  onClick={() => setSelectedMonth(month)}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div>
+                      <p className="font-semibold text-gray-800 text-[14px]">{month.monthName}</p>
+                      <span className={`inline-flex items-center gap-1.5 font-semibold text-[12px] mt-0.5 ${st.text}`}>
+                        <span className={`w-[6px] h-[6px] rounded-full shrink-0 ${st.dot}`} />
+                        {st.label}
+                      </span>
+                    </div>
+                    <button className="px-3 py-2 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[12px] font-semibold rounded-md min-h-[44px]">
+                      Details →
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3 text-[12px] text-gray-500">
+                    <span>{stats.paidMembers}/{stats.totalMembers} paid</span>
+                    <span className="font-semibold text-gray-800">₹{stats.totalCollected.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-[11px] text-gray-400">{pct}%</span>
+                    <span className="text-[11px] text-gray-400 w-8 text-right">{pct}%</span>
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                <span className={`inline-flex items-center gap-1.5 font-semibold text-[12px] ${st.text}`}>
-                  <span className={`w-[6px] h-[6px] rounded-full shrink-0 ${st.dot}`} />
-                  {st.label}
-                </span>
+          {/* Desktop custom grid layout */}
+          <div className="hidden md:block">
+            <div
+              className="grid px-5 py-2.5 bg-gray-50/70 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider"
+              style={{ gridTemplateColumns: '2.5rem 1fr 7rem 6rem 6rem 8rem' }}
+            >
+              <span>#</span>
+              <span>Month</span>
+              <span>Status</span>
+              <span>Paid</span>
+              <span>Collected</span>
+              <span className="text-right">Action</span>
+            </div>
 
-                <span className="text-gray-700 tabular-nums">{stats.paidMembers}/{stats.totalMembers}</span>
+            {months.map((month, index) => {
+              const stats = calculateMonthStats(month);
+              const pct = stats.totalMembers > 0 ? Math.round((stats.paidMembers / stats.totalMembers) * 100) : 0;
+              const st = STATUS_CONFIG[month.status] || STATUS_CONFIG.upcoming;
 
-                <span className="font-semibold text-gray-900 tabular-nums">
-                  ₹{stats.totalCollected.toLocaleString()}
-                </span>
+              return (
+                <div
+                  key={index}
+                  className={`grid px-5 py-3.5 border-b border-gray-100 last:border-b-0 items-center text-[13px] border-l-[3px] hover:bg-gray-50/40 transition-colors cursor-pointer ${st.row}`}
+                  style={{ gridTemplateColumns: '2.5rem 1fr 7rem 6rem 6rem 8rem' }}
+                  onClick={() => setSelectedMonth(month)}
+                >
+                  <span className="text-[12px] text-gray-400 tabular-nums">{index + 1}</span>
 
-                <div className="flex justify-end">
-                  <button className="px-2.5 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[12px] font-semibold rounded-md hover:bg-indigo-100 transition-colors">
-                    View Details →
-                  </button>
+                  <div>
+                    <p className="font-semibold text-gray-800">{month.monthName}</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <div className="h-1 w-16 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-[11px] text-gray-400">{pct}%</span>
+                    </div>
+                  </div>
+
+                  <span className={`inline-flex items-center gap-1.5 font-semibold text-[12px] ${st.text}`}>
+                    <span className={`w-[6px] h-[6px] rounded-full shrink-0 ${st.dot}`} />
+                    {st.label}
+                  </span>
+
+                  <span className="text-gray-700 tabular-nums">{stats.paidMembers}/{stats.totalMembers}</span>
+
+                  <span className="font-semibold text-gray-900 tabular-nums">
+                    ₹{stats.totalCollected.toLocaleString()}
+                  </span>
+
+                  <div className="flex justify-end">
+                    <button className="px-2.5 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[12px] font-semibold rounded-md hover:bg-indigo-100 transition-colors">
+                      View Details →
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
