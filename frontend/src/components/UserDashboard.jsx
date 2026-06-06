@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users } from 'lucide-react';
+import { Users, TrendingUp, IndianRupee, CalendarCheck } from 'lucide-react';
 import { GroupCard } from './GroupCard';
 import { RequestNotifications } from './RequestNotifications';
 import { ChitValueBanner } from './ChitValueBanner';
@@ -18,10 +18,27 @@ const StatCard = ({ label, value, sub, color = 'default' }) => {
 };
 
 const TABS = [
-  { id: 'groups', label: 'My Groups' },
-  { id: 'notifications', label: 'Notifications' },
-  { id: 'activity', label: 'Activity' },
+  { id: 'groups',        label: 'My Groups'      },
+  { id: 'notifications', label: 'Notifications'  },
+  { id: 'activity',      label: 'Activity'        },
 ];
+
+const TIMELINE_ICONS = {
+  paid:     { icon: <IndianRupee size={12} />,    bg: 'bg-emerald-500', ring: 'ring-emerald-100' },
+  prebook:  { icon: <CalendarCheck size={12} />,  bg: 'bg-purple-500',  ring: 'ring-purple-100'  },
+  joined:   { icon: <Users size={12} />,          bg: 'bg-indigo-500',  ring: 'ring-indigo-100'  },
+  upcoming: { icon: <TrendingUp size={12} />,     bg: 'bg-gray-400',    ring: 'ring-gray-100'    },
+};
+
+const relativeDate = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 30) return `${days} days ago`;
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+};
 
 export const UserDashboard = ({ user }) => {
   const [activeTab, setActiveTab] = useState('groups');
@@ -50,7 +67,7 @@ export const UserDashboard = ({ user }) => {
           });
           setGroups(groupsWithShare);
         }
-      } catch (err) { setGroups([]); }
+      } catch { setGroups([]); }
     };
     fetchMyGroups();
   }, []);
@@ -61,7 +78,7 @@ export const UserDashboard = ({ user }) => {
         const groupIds = groups.map(g => g._id);
         const data = await apiFetch(`${API_BASE}/month/my`, { method: 'POST', body: { groupIds }, showToast: false });
         if (data.success) setMonthRecords(data.months);
-      } catch (err) { setMonthRecords([]); }
+      } catch { setMonthRecords([]); }
     };
     if (groups.length > 0) fetchMonthData();
   }, [groups]);
@@ -102,7 +119,7 @@ export const UserDashboard = ({ user }) => {
       try {
         const data = await apiFetch(`${API_BASE}/request/my`, { showToast: false });
         if (data.success) pendingRequests = data.requests.filter(req => req.status === 'pending').length;
-      } catch (err) {}
+      } catch {}
       setStats({ activeGroups, totalPaid, upcomingPayments, pendingRequests });
     };
     computeStatsAndGroups();
@@ -146,8 +163,32 @@ export const UserDashboard = ({ user }) => {
   const totalAmountPaid = monthRecords.filter(m => m.status === 'paid').reduce((sum, m) => sum + (m.amount || 0), 0);
   const firstName = user?.firstName || '';
 
+  /* ── Timeline events ─────────────────────────────────────── */
+  const timelineEvents = [];
+  monthRecords.forEach(m => {
+    if (m.status === 'paid') {
+      const group = groups.find(g => g._id === m.groupId);
+      timelineEvents.push({
+        type: 'paid',
+        label: `Paid ₹${Math.round(m.amount || (group?.shareAmount / group?.tenure) || 0).toLocaleString()} for Group ${group?.groupNo || ''}`,
+        sub: m.monthName,
+        date: m.paymentDate || m.updatedAt,
+      });
+    }
+  });
+  timelineEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const displayEvents = timelineEvents.slice(0, 20);
+
+  const handleNavClick = (id) => {
+    if (TABS.find(t => t.id === id)) setActiveTab(id);
+  };
+
   return (
-    <AppLayout pageTitle="Overview">
+    <AppLayout
+      pageTitle="Overview"
+      activeView={activeTab}
+      onNavClick={handleNavClick}
+    >
       <div className="max-w-5xl mx-auto px-7 py-8 space-y-7 pb-20">
         <div>
           <h1 className="text-[22px] font-semibold text-gray-900 tracking-tight">
@@ -182,6 +223,7 @@ export const UserDashboard = ({ user }) => {
           />
         </div>
 
+        {/* Tabs */}
         <div>
           <div className="flex items-center border-b border-gray-200">
             {TABS.map(tab => (
@@ -206,11 +248,12 @@ export const UserDashboard = ({ user }) => {
           </div>
 
           <div className="mt-6">
+            {/* ── Groups tab ───────────────────────────────── */}
             {activeTab === 'groups' && (
               mergedGroups.length === 0 ? (
                 <div className="text-center py-16 text-gray-400">
                   <Users className="mx-auto mb-3 opacity-40" size={32} />
-                  <p className="text-[14px]">No groups yet. Request to join a group from your admin.</p>
+                  <p className="text-[14px]">No groups yet. Request to join a group from the banner above.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -221,15 +264,18 @@ export const UserDashboard = ({ user }) => {
               )
             )}
 
+            {/* ── Notifications tab ────────────────────────── */}
             {activeTab === 'notifications' && <RequestNotifications />}
 
+            {/* ── Activity tab ─────────────────────────────── */}
             {activeTab === 'activity' && (
               <div className="space-y-5">
+                {/* Summary cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-white rounded-xl border border-gray-200/80 px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Total Paid</p>
                     <p className="text-[24px] font-bold text-gray-900 tabular-nums">₹{totalAmountPaid.toLocaleString()}</p>
-                    <p className="text-[12px] text-gray-500 mt-1">Across all active groups</p>
+                    <p className="text-[12px] text-gray-500 mt-1">Across all groups</p>
                   </div>
                   <div className="bg-white rounded-xl border border-gray-200/80 px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Prebook Requests</p>
@@ -253,50 +299,46 @@ export const UserDashboard = ({ user }) => {
                   </div>
                 </div>
 
+                {/* Timeline */}
                 <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
                   <div className="px-5 py-3.5 border-b border-gray-100">
-                    <h3 className="text-[14px] font-semibold text-gray-900">Enrolled Groups</h3>
+                    <h3 className="text-[14px] font-semibold text-gray-900">Payment Timeline</h3>
+                    <p className="text-[12px] text-gray-400 mt-0.5">Your recent payment activity across all groups</p>
                   </div>
-                  <div
-                    className="grid px-5 py-2 bg-gray-50/70 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider"
-                    style={{ gridTemplateColumns: '1fr 5rem 7rem 7rem' }}
-                  >
-                    <span>Group</span>
-                    <span>Progress</span>
-                    <span className="text-right">Share / mo</span>
-                    <span className="text-right">Status</span>
-                  </div>
-                  {groups.length === 0 ? (
-                    <div className="px-5 py-8 text-center text-[13px] text-gray-400">No groups enrolled.</div>
+
+                  {displayEvents.length === 0 ? (
+                    <div className="px-5 py-10 text-center text-[13px] text-gray-400">
+                      No payment activity yet. Your transactions will appear here.
+                    </div>
                   ) : (
-                    groups.map(group => {
-                      const mg = mergedGroups.find(g => g._id === group._id) || group;
-                      const st = mg.myPaymentStatus || 'upcoming';
-                      const dotColor = { paid: 'bg-emerald-500', due: 'bg-amber-500', pending: 'bg-amber-400', upcoming: 'bg-gray-300', completed: 'bg-indigo-400' }[st] || 'bg-gray-300';
-                      const textColor = { paid: 'text-emerald-700', due: 'text-amber-700', pending: 'text-amber-700', upcoming: 'text-gray-500', completed: 'text-indigo-600' }[st] || 'text-gray-500';
-                      return (
-                        <div
-                          key={group._id}
-                          className="grid px-5 py-3 border-b border-gray-100 last:border-b-0 items-center hover:bg-gray-50/40 transition-colors text-[13px]"
-                          style={{ gridTemplateColumns: '1fr 5rem 7rem 7rem' }}
-                        >
-                          <div>
-                            <p className="font-semibold text-gray-800">Group {group.groupNo}</p>
-                            <p className="text-[12px] text-gray-400">
-                              {new Date(group.startMonth).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
-                            </p>
-                          </div>
-                          <span className="text-gray-600">{mg.currentMonth || 0}/{group.tenure}</span>
-                          <span className="text-right font-semibold text-gray-900">
-                            ₹{((group.shareAmount || 0) / (group.tenure || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                          </span>
-                          <span className={`flex items-center justify-end gap-1.5 font-medium ${textColor}`}>
-                            <span className={`w-[6px] h-[6px] rounded-full shrink-0 ${dotColor}`} />
-                            {st.charAt(0).toUpperCase() + st.slice(1)}
-                          </span>
+                    <div className="px-5 py-4">
+                      <div className="relative">
+                        <div className="absolute left-3.5 top-0 bottom-0 w-px bg-gray-100" />
+                        <div className="space-y-4">
+                          {displayEvents.map((event, i) => {
+                            const tl = TIMELINE_ICONS[event.type] || TIMELINE_ICONS.upcoming;
+                            return (
+                              <div key={i} className="flex gap-4 relative">
+                                <div className={`flex-shrink-0 w-7 h-7 rounded-full ${tl.bg} ring-4 ${tl.ring} flex items-center justify-center text-white z-10`}>
+                                  {tl.icon}
+                                </div>
+                                <div className="flex-1 min-w-0 pt-0.5 pb-4 border-b border-gray-100 last:border-b-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="text-[13px] font-semibold text-gray-800 leading-snug">{event.label}</p>
+                                    <span className="text-[11px] text-gray-400 whitespace-nowrap shrink-0">
+                                      {relativeDate(event.date)}
+                                    </span>
+                                  </div>
+                                  {event.sub && (
+                                    <p className="text-[12px] text-gray-400 mt-0.5">{event.sub}</p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

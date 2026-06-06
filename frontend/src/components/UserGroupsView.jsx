@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Eye, DollarSign, Calendar, Users } from 'lucide-react';
+import { ChevronLeft, Eye, Users, AlertTriangle } from 'lucide-react';
 
 const STATUS_STYLE = {
   active:    { dot: 'bg-emerald-500', text: 'text-emerald-700' },
@@ -71,7 +71,8 @@ export const UserGroupsView = () => {
     const totalInvestment = userGroups.reduce((sum, g) => sum + (g.userShareAmount || 0), 0);
     const activeGroups = userGroups.filter(g => g.status === 'active').length;
     const completedGroups = userGroups.filter(g => g.status === 'completed').length;
-    return { totalInvestment, activeGroups, completedGroups };
+    const unclaimedGroups = userGroups.filter(g => g.status === 'completed' && !g.userPreBookedMonth).length;
+    return { totalInvestment, activeGroups, completedGroups, unclaimedGroups };
   };
 
   if (loading) {
@@ -121,6 +122,21 @@ export const UserGroupsView = () => {
       </header>
 
       <div className="max-w-5xl mx-auto px-7 py-8 space-y-7 pb-20">
+        {/* Unclaimed payouts banner */}
+        {stats.unclaimedGroups > 0 && (
+          <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl">
+            <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+            <div>
+              <p className="text-[13px] font-semibold text-amber-800">
+                {stats.unclaimedGroups} unclaimed payout{stats.unclaimedGroups > 1 ? 's' : ''}
+              </p>
+              <p className="text-[12px] text-amber-700">
+                This member has completed group(s) with no prebooked payout month — follow up to resolve.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* User card */}
         <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] px-6 py-5">
           <div className="flex items-center gap-4">
@@ -134,8 +150,8 @@ export const UserGroupsView = () => {
             <div className="hidden md:flex items-center gap-6">
               {[
                 { label: 'Total Groups', value: userGroups.length },
-                { label: 'Active', value: stats.activeGroups },
-                { label: 'Investment', value: `₹${stats.totalInvestment.toLocaleString()}` },
+                { label: 'Active',       value: stats.activeGroups },
+                { label: 'Investment',   value: `₹${stats.totalInvestment.toLocaleString()}` },
               ].map(s => (
                 <div key={s.label} className="text-center">
                   <p className="text-[18px] font-bold text-gray-900 tabular-nums">{s.value}</p>
@@ -175,8 +191,13 @@ export const UserGroupsView = () => {
                 <tbody>
                   {userGroups.map((group) => {
                     const st = STATUS_STYLE[group.status] || STATUS_STYLE.upcoming;
+                    const isCompleted = group.status === 'completed';
+                    const isUnclaimed = isCompleted && !group.userPreBookedMonth;
                     return (
-                      <tr key={group._id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/40 transition-colors">
+                      <tr
+                        key={group._id}
+                        className={`border-b border-gray-100 last:border-b-0 hover:bg-gray-50/40 transition-colors ${isCompleted ? 'opacity-70' : ''} ${isUnclaimed ? 'border-l-2 border-l-amber-400' : ''}`}
+                      >
                         <td className="px-5 py-3.5">
                           <p className="font-semibold text-gray-800">Group {group.groupNo}</p>
                           <p className="text-[12px] text-gray-400">
@@ -191,8 +212,15 @@ export const UserGroupsView = () => {
                         <td className="px-5 py-3.5 font-semibold text-gray-900">
                           ₹{group.userShareAmount.toLocaleString()}
                         </td>
-                        <td className="px-5 py-3.5 text-gray-600">
-                          {group.userPreBookedMonth || <span className="text-gray-300">—</span>}
+                        <td className="px-5 py-3.5">
+                          {isUnclaimed ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                              <AlertTriangle size={9} />
+                              Unclaimed
+                            </span>
+                          ) : (
+                            <span className="text-gray-600">{group.userPreBookedMonth || <span className="text-gray-300">—</span>}</span>
+                          )}
                         </td>
                         <td className="px-5 py-3.5">
                           <span className={`inline-flex items-center gap-1.5 font-semibold text-[12px] ${st.text}`}>
