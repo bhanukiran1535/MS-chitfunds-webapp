@@ -48,6 +48,7 @@ export const UserDashboard = ({ user }) => {
   const [monthRecords, setMonthRecords] = useState([]);
   const [mergedGroups, setMergedGroups] = useState([]);
   const [prebookStats, setPrebookStats] = useState({ sent: 0, approved: 0 });
+  const [prebookRequests, setPrebookRequests] = useState([]);
   const [lastPaymentDate, setLastPaymentDate] = useState(null);
 
   useEffect(() => {
@@ -132,8 +133,9 @@ export const UserDashboard = ({ user }) => {
         if (data.success && Array.isArray(data.requests)) {
           const prebooks = data.requests.filter(r => r.type === 'month_prebook');
           setPrebookStats({ sent: prebooks.length, approved: prebooks.filter(r => r.status === 'approved').length });
+          setPrebookRequests(prebooks);
         }
-      } catch { setPrebookStats({ sent: 0, approved: 0 }); }
+      } catch { setPrebookStats({ sent: 0, approved: 0 }); setPrebookRequests([]); }
     };
     fetchPrebookStats();
   }, []);
@@ -165,19 +167,42 @@ export const UserDashboard = ({ user }) => {
 
   /* ── Timeline events ─────────────────────────────────────── */
   const timelineEvents = [];
+
+  // Paid events
   monthRecords.forEach(m => {
     if (m.status === 'paid') {
       const group = groups.find(g => g._id === m.groupId);
       timelineEvents.push({
         type: 'paid',
-        label: `Paid ₹${Math.round(m.amount || (group?.shareAmount / group?.tenure) || 0).toLocaleString()} for Group ${group?.groupNo || ''}`,
+        label: `Paid ₹${Math.round(m.amount || (group?.shareAmount / group?.tenure) || 0).toLocaleString()} — Group ${group?.groupNo || ''}`,
         sub: m.monthName,
         date: m.paymentDate || m.updatedAt,
       });
     }
   });
+
+  // Prebooked events
+  prebookRequests.forEach(r => {
+    timelineEvents.push({
+      type: 'prebook',
+      label: `Payout prebook requested${r.monthName ? ` for ${r.monthName}` : ''}`,
+      sub: r.status === 'approved' ? 'Approved by admin' : r.status === 'rejected' ? 'Rejected' : 'Pending admin review',
+      date: r.timestamp || r.createdAt,
+    });
+  });
+
+  // Joined events
+  groups.forEach(g => {
+    timelineEvents.push({
+      type: 'joined',
+      label: `Joined Group ${g.groupNo}`,
+      sub: `₹${(g.shareAmount || 0).toLocaleString()} chit · ${g.tenure} months`,
+      date: g.startMonth,
+    });
+  });
+
   timelineEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
-  const displayEvents = timelineEvents.slice(0, 20);
+  const displayEvents = timelineEvents.slice(0, 25);
 
   const handleNavClick = (id) => {
     if (TABS.find(t => t.id === id)) setActiveTab(id);

@@ -137,7 +137,7 @@ export const GroupCard = ({ group }) => {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          {isCompleted ? 'View History' : (payStatus === 'due' || payStatus === 'pending') ? 'Pay Now' : 'View Details'}
+          {isCompleted ? 'View Details' : (payStatus === 'due' || payStatus === 'pending') ? 'Pay Now' : 'View Details'}
         </button>
       </div>
     </div>

@@ -70,9 +70,17 @@ export const AdminDashboard = ({ user }) => {
     fetchAdminStats();
   }, [API_BASE]);
 
+  const NAV_TO_TAB = { dashboard: 'requests', groups: 'groups', members: 'members' };
+  const TAB_TO_NAV = { requests: 'dashboard', groups: 'groups', members: 'members' };
+
+  const handleNavClick = (navId) => {
+    const tabId = NAV_TO_TAB[navId];
+    if (tabId) setActiveTab(tabId);
+  };
+
   if (loading) {
     return (
-      <AppLayout pageTitle="Admin Overview">
+      <AppLayout pageTitle="Admin Overview" activeView="dashboard" onNavClick={handleNavClick}>
         <div className="flex items-center justify-center h-64">
           <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -81,7 +89,7 @@ export const AdminDashboard = ({ user }) => {
   }
 
   return (
-    <AppLayout pageTitle="Admin Overview">
+    <AppLayout pageTitle="Admin Overview" activeView={TAB_TO_NAV[activeTab]} onNavClick={handleNavClick}>
       <div className="max-w-6xl mx-auto px-7 py-8 space-y-7 pb-20">
         <div className="flex items-center justify-between">
           <div>
