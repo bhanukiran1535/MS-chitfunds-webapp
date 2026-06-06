@@ -1,0 +1,24 @@
+- **Notification System Needs Redesign** – Notifications are not handled effectively and require a more structured, user-friendly approach. (place it appropriatly in the bell icon)
+- **Request Confirmation Popups Need Improvement** – The application currently relies on native browser dialogs (`window.confirm`), which look unprofessional and provide a poor user experience.
+- **Toast Notifications Need Better UI/UX** – Existing toast messages feel outdated and inconsistent with the overall design language.
+- **Enhance the Activity Section** – Improve the activity feed to make it more informative, useful, and visually engaging.
+- Promotional Banner for Upcoming Chit Groups – Add a professional banner highlighting upcoming chit groups (e.g., "New ₹2,00,000 Chit Starting Next Month") with a strong visual design.
+    
+    this should be dynamic so that when ever there is any new group starting admin should be able to set ( to show a banner with details given ) and join button will similarly set a request to the admin for approval
+    
+- **Improve Completed Group Visuals** – Add a distinct completed-state design, such as grayscale styling, completion badges, or an official "Completed" stamp.
+- **Sidebar Navigation Improvements** – Add a sidebar collapse/expand toggle and improve overall navigation usability.
+- **Fix Non-Functional Menu Actions** – Several menu options and buttons are currently non-functional and need to be completed or removed.
+- **Handle Unclaimed Final-Month Payouts Properly** – For users who have not claimed their payout by the end of the group's tenure, the system should display a more meaningful status instead of showing:
+    
+    > Group No.
+    > 
+    > 
+    > Payout Month – Not Claimed
+    > 
+    
+    A dedicated workflow or status for unclaimed payouts should be introduced.
+    
+    **Mobile Responsiveness Improvements** – Optimize layouts and interactions for mobile devices. as a part of development we were developing in web laptop but most of our almost all are mobile users so we need to have a very good responcive for mobile version
+    
+    ⇒ And also all these features UI i should be appropriatly look good with the present pages, take care in UI as it is enterprize level real world production website

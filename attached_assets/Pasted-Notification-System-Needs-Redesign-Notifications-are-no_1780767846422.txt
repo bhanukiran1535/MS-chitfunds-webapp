@@ -1,0 +1,21 @@
+Notification System Needs Redesign – Notifications are not handled effectively and require a more structured, user-friendly approach.
+Request Confirmation Popups Need Improvement – The application currently relies on native browser dialogs (window.confirm), which look unprofessional and provide a poor user experience.
+Toast Notifications Need Better UI/UX – Existing toast messages feel outdated and inconsistent with the overall design language.
+Evaluate Display of Completed Groups – Decide whether completed groups should remain visible and, if so, how they should be presented.
+Enhance the Activity Section – Improve the activity feed to make it more informative, useful, and visually engaging.
+Improve Homepage Banner Design – Redesign banners to look more polished and enterprise-grade.
+Promotional Banner for Upcoming Chit Groups – Add a professional banner highlighting upcoming chit groups (e.g., "New ₹2,00,000 Chit Starting Next Month") with a strong visual design.
+Mobile Responsiveness Improvements – Optimize layouts and interactions for mobile devices.
+User Name Displays as Undefined After Login – Immediately after login, the user name briefly appears as undefined and only displays correctly after a page refresh.
+Improve Completed Group Visuals – Add a distinct completed-state design, such as grayscale styling, completion badges, or an official "Completed" stamp.
+Sidebar Navigation Improvements – Add a sidebar collapse/expand toggle and improve overall navigation usability.
+Fix Non-Functional Menu Actions – Several menu options and buttons are currently non-functional and need to be completed or removed.
+Prevent Duplicate Payment Requests – Users can submit multiple payment requests for the same payment. Once a request is submitted, the UI should clearly indicate that the request is already pending and prevent duplicates.
+Disable Leave Group for Completed Groups – The "Leave Group" action should not be available once a group has been completed.
+
+Handle Unclaimed Final-Month Payouts Properly – For users who have not claimed their payout by the end of the group's tenure, the system should display a more meaningful status instead of showing:
+
+Group No.
+Payout Month – Not Claimed
+
+A dedicated workflow or status for unclaimed payouts should be introduced.
