@@ -192,5 +192,25 @@ groupRoute.patch('/leave/:groupid', userAuth, async (req, res) => {
   }
 });
 
+// PATCH /group/:groupId/banner — admin only
+groupRoute.patch('/:groupId/banner', userAuth, adminAuth, async (req, res) => {
+  try {
+    const { bannerEnabled, bannerTagline } = req.body;
+    const group = await Group.findByIdAndUpdate(
+      req.params.groupId,
+      { bannerEnabled: !!bannerEnabled, bannerTagline: (bannerTagline || '').trim() },
+      { new: true }
+    );
+    if (!group) return res.status(404).json({ success: false, message: 'Group not found' });
+    res.json({
+      success: true,
+      message: bannerEnabled ? 'Promotional banner enabled.' : 'Promotional banner disabled.',
+      group,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = groupRoute;
 

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Settings, Plus, Users } from 'lucide-react';
+import { Eye, Settings, Plus, Users, Megaphone, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 import { GroupDetailsView } from './GroupDetailsView';
 import { apiFetch } from '../lib/api';
 
@@ -18,11 +19,31 @@ const STATUS_STYLE = {
   completed: { dot: 'bg-gray-400',    text: 'text-gray-600'    },
 };
 
+const Toggle = ({ checked, onChange, disabled }) => (
+  <button
+    type="button"
+    onClick={() => !disabled && onChange(!checked)}
+    disabled={disabled}
+    aria-checked={checked}
+    role="switch"
+    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+      checked ? 'bg-indigo-600' : 'bg-gray-200'
+    } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+  >
+    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${
+      checked ? 'translate-x-[18px]' : 'translate-x-[3px]'
+    }`} />
+  </button>
+);
+
 export const GroupManagement = () => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [expandedBanner, setExpandedBanner] = useState(null);
+  const [bannerData, setBannerData] = useState({});
   const navigate = useNavigate();
+  const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   const fetchGroups = async () => {
     setLoading(true);
@@ -30,11 +51,22 @@ export const GroupManagement = () => {
       const statuses = ['active', 'upcoming'];
       const responses = await Promise.all(
         statuses.map(status =>
-          apiFetch(`${import.meta.env.VITE_API_BASE_URL}/group/allGroups?status=${status}`, { showToast: false })
+          apiFetch(`${API_BASE}/group/allGroups?status=${status}`, { showToast: false })
         )
       );
-      setGroups(responses.flatMap(r => (r.success ? r.groups : [])));
-    } catch (err) {
+      const allGroups = responses.flatMap(r => (r?.success ? r.groups : []));
+      setGroups(allGroups);
+
+      const initial = {};
+      allGroups.forEach(g => {
+        initial[g._id] = {
+          enabled: g.bannerEnabled || false,
+          tagline: g.bannerTagline || '',
+          saving: false,
+        };
+      });
+      setBannerData(initial);
+    } catch {
       setGroups([]);
     } finally {
       setLoading(false);
@@ -42,6 +74,32 @@ export const GroupManagement = () => {
   };
 
   useEffect(() => { fetchGroups(); }, []);
+
+  const saveBanner = async (groupId, overrides = {}) => {
+    const current = { ...bannerData[groupId], ...overrides };
+    setBannerData(prev => ({ ...prev, [groupId]: { ...prev[groupId], ...overrides, saving: true } }));
+    try {
+      await fetch(`${API_BASE}/group/${groupId}/banner`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ bannerEnabled: current.enabled, bannerTagline: current.tagline }),
+      });
+      toast.success(current.enabled ? 'Promotional banner enabled.' : 'Banner disabled.');
+    } catch {
+      toast.error('Failed to save banner settings.');
+    }
+    setBannerData(prev => ({ ...prev, [groupId]: { ...prev[groupId], saving: false } }));
+  };
+
+  const handleToggle = (groupId, enabled) => {
+    setBannerData(prev => ({ ...prev, [groupId]: { ...prev[groupId], enabled } }));
+    saveBanner(groupId, { enabled });
+  };
+
+  const handleTaglineSave = (groupId) => {
+    saveBanner(groupId, {});
+  };
 
   if (loading) {
     return (
@@ -85,56 +143,148 @@ export const GroupManagement = () => {
                   const current = calculateCurrentMonth(group.startMonth);
                   const pct = group.tenure ? Math.min(Math.round((current / group.tenure) * 100), 100) : 0;
                   const st = STATUS_STYLE[group.status] || STATUS_STYLE.upcoming;
+                  const bd = bannerData[group._id];
+                  const isExpanded = expandedBanner === group._id;
+
                   return (
-                    <tr key={group._id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/40 transition-colors">
-                      <td className="px-5 py-3.5">
-                        <p className="font-semibold text-gray-800">Group {group.groupNo}</p>
-                        <p className="text-[12px] text-gray-400">
-                          Started {new Date(group.startMonth).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
-                        </p>
-                      </td>
-                      <td className="px-5 py-3.5 font-semibold text-gray-900">
-                        ₹{group.chitValue.toLocaleString()}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
+                    <Fragment key={group._id}>
+                      <tr className="border-b border-gray-100 hover:bg-gray-50/40 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <p className="font-semibold text-gray-800">Group {group.groupNo}</p>
+                          <p className="text-[12px] text-gray-400">
+                            Started {new Date(group.startMonth).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+                          </p>
+                        </td>
+                        <td className="px-5 py-3.5 font-semibold text-gray-900">
+                          ₹{group.chitValue.toLocaleString()}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-[12px] text-gray-500 whitespace-nowrap">{current}/{group.tenure}</span>
                           </div>
-                          <span className="text-[12px] text-gray-500 whitespace-nowrap">{current}/{group.tenure}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className="inline-flex items-center gap-1.5 text-gray-700">
-                          <Users size={13} className="text-gray-400" />
-                          {group.members?.length || 0}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className={`inline-flex items-center gap-1.5 font-semibold text-[12px] ${st.text}`}>
-                          <span className={`w-[6px] h-[6px] rounded-full ${st.dot}`} />
-                          {group.status.charAt(0).toUpperCase() + group.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setSelectedGroup(group)}
-                            className="flex items-center gap-1 px-2.5 py-1 bg-white border border-gray-200 text-gray-700 text-[12px] font-semibold rounded-md hover:bg-gray-50 transition-colors"
-                          >
-                            <Eye size={12} />
-                            View
-                          </button>
-                          <button
-                            onClick={() => navigate(`/admin/group/${group._id}/manage`)}
-                            className="flex items-center gap-1 px-2.5 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[12px] font-semibold rounded-md hover:bg-indigo-100 transition-colors"
-                          >
-                            <Settings size={12} />
-                            Manage
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className="inline-flex items-center gap-1.5 text-gray-700">
+                            <Users size={13} className="text-gray-400" />
+                            {group.members?.length || 0}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className={`inline-flex items-center gap-1.5 font-semibold text-[12px] ${st.text}`}>
+                            <span className={`w-[6px] h-[6px] rounded-full ${st.dot}`} />
+                            {group.status.charAt(0).toUpperCase() + group.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                              onClick={() => setSelectedGroup(group)}
+                              className="flex items-center gap-1 px-2.5 py-1 bg-white border border-gray-200 text-gray-700 text-[12px] font-semibold rounded-md hover:bg-gray-50 transition-colors"
+                            >
+                              <Eye size={12} />
+                              View
+                            </button>
+                            <button
+                              onClick={() => navigate(`/admin/group/${group._id}/manage`)}
+                              className="flex items-center gap-1 px-2.5 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[12px] font-semibold rounded-md hover:bg-indigo-100 transition-colors"
+                            >
+                              <Settings size={12} />
+                              Manage
+                            </button>
+                            {group.status === 'upcoming' && (
+                              <button
+                                onClick={() => setExpandedBanner(isExpanded ? null : group._id)}
+                                className={`flex items-center gap-1 px-2.5 py-1 border text-[12px] font-semibold rounded-md transition-colors ${
+                                  bd?.enabled
+                                    ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700'
+                                    : isExpanded
+                                      ? 'bg-gray-100 text-gray-700 border-gray-300'
+                                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                }`}
+                              >
+                                <Megaphone size={12} />
+                                Banner
+                                {bd?.enabled && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-white ml-0.5" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Banner settings expanded row */}
+                      {isExpanded && group.status === 'upcoming' && (
+                        <tr className="border-b border-gray-100">
+                          <td colSpan={6} className="px-5 py-4 bg-indigo-50/40">
+                            <div className="flex items-start gap-5">
+                              <div className="flex items-center gap-3 shrink-0 pt-0.5">
+                                <Toggle
+                                  checked={bd?.enabled || false}
+                                  onChange={(val) => handleToggle(group._id, val)}
+                                  disabled={bd?.saving}
+                                />
+                                <div>
+                                  <p className="text-[13px] font-semibold text-gray-800">
+                                    {bd?.enabled ? 'Banner live' : 'Banner disabled'}
+                                  </p>
+                                  <p className="text-[11px] text-gray-400 mt-0.5">
+                                    {bd?.enabled
+                                      ? 'Members can see this group in the promotional banner'
+                                      : 'Toggle on to display a promotional banner to members'}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {bd?.enabled && (
+                                <div className="flex-1 flex items-center gap-2 min-w-0">
+                                  <div className="flex-1 min-w-0">
+                                    <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1 block">
+                                      Tagline (optional)
+                                    </label>
+                                    <input
+                                      type="text"
+                                      placeholder='e.g. "New ₹2L Chit Starting Next Month — Limited Slots!"'
+                                      maxLength={120}
+                                      value={bd?.tagline || ''}
+                                      onChange={(e) =>
+                                        setBannerData(prev => ({
+                                          ...prev,
+                                          [group._id]: { ...prev[group._id], tagline: e.target.value },
+                                        }))
+                                      }
+                                      className="w-full px-3 py-2 text-[13px] border border-gray-200 rounded-lg bg-white text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={() => handleTaglineSave(group._id)}
+                                    disabled={bd?.saving}
+                                    className="shrink-0 mt-5 px-3 py-2 bg-indigo-600 text-white text-[12px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                                  >
+                                    {bd?.saving ? 'Saving…' : 'Save'}
+                                  </button>
+                                </div>
+                              )}
+
+                              {bd?.enabled && (
+                                <div className="shrink-0 pt-0.5">
+                                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600">
+                                    <Sparkles size={11} />
+                                    Preview
+                                  </div>
+                                  <p className="text-[11px] text-gray-400 mt-0.5">
+                                    {Math.max(0, group.tenure - (group.members?.length || 0))} slots remaining
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })}
               </tbody>

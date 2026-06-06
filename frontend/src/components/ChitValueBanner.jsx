@@ -1,61 +1,49 @@
 import { useEffect, useState } from 'react';
-import { Plus, X, ArrowRight } from 'lucide-react';
+import { Sparkles, Users, X, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from './ConfirmDialog';
 
-const chitValues = [50000, 100000, 200000, 500000];
-
 export const ChitValueBanner = () => {
-  const [filteredChits, setFilteredChits] = useState([]);
-  const [myRequests, setMyRequests] = useState([]);
-  const [customAmount, setCustomAmount] = useState('');
-  const [customAmountStr, setCustomAmountStr] = useState('');
+  const [bannerGroups, setBannerGroups] = useState([]);
+  const [pendingAmounts, setPendingAmounts] = useState([]);
   const [confirm, setConfirm] = useState(null);
   const API = import.meta.env.VITE_API_BASE_URL;
 
   const fetchData = async () => {
     try {
       const [groupsRes, requestsRes] = await Promise.all([
-        fetch(`${API}/group/status/upcoming`, { credentials: 'include' }),
+        fetch(`${API}/group/allGroups?status=upcoming`, { credentials: 'include' }),
         fetch(`${API}/request/my`, { credentials: 'include' }),
       ]);
       const [groupsData, requestsData] = await Promise.all([groupsRes.json(), requestsRes.json()]);
 
       if (groupsData.success) {
-        const upcomingGroups = groupsData.groups;
-        const filtered = chitValues
-          .map(val => {
-            const group = upcomingGroups
-              .filter(g => g.chitValue >= val)
-              .sort((a, b) => new Date(a.startMonth) - new Date(b.startMonth))[0];
-            if (!group) return null;
-            return {
-              chitValue: val,
-              tenure: group.tenure,
-              startMonth: new Date(group.startMonth).toLocaleString('default', { month: 'long', year: 'numeric' }),
-            };
-          })
-          .filter(Boolean);
-        setFilteredChits(filtered);
+        const enabled = (groupsData.groups || [])
+          .filter(g => g.bannerEnabled)
+          .slice(0, 3);
+        setBannerGroups(enabled);
       }
 
       if (requestsData.success) {
-        const joinRequests = requestsData.requests
-          .filter(req => req.type === 'join_group' && req.status === 'pending')
-          .map(req => req.amount);
-        setMyRequests(joinRequests);
+        const amounts = (requestsData.requests || [])
+          .filter(r => r.type === 'join_group' && r.status === 'pending')
+          .map(r => r.amount);
+        setPendingAmounts(amounts);
       }
-    } catch (error) {
-      console.error('Error fetching chit data:', error);
+    } catch (err) {
+      console.error('Error fetching banner data:', err);
     }
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const requestToJoin = async (amount) => {
+  const requestToJoin = (group) => {
+    const amount = group.chitValue;
     setConfirm({
       title: 'Request to Join',
-      message: `Send a join request for a ₹${Number(amount).toLocaleString()} chit group? Your request will be reviewed by the admin.`,
+      message: `Send a join request for the ₹${amount.toLocaleString()} chit group starting ${
+        new Date(group.startMonth).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+      }? Your request will be reviewed by the admin.`,
       confirmLabel: 'Send Request',
       variant: 'info',
       onConfirm: async () => {
@@ -70,7 +58,7 @@ export const ChitValueBanner = () => {
           const data = await res.json();
           if (data.success) {
             toast.success(data.message || 'Request submitted successfully.');
-            setMyRequests(prev => [...prev, amount]);
+            setPendingAmounts(prev => [...prev, amount]);
           } else {
             toast.error(data.message || 'Failed to submit request.');
           }
@@ -81,10 +69,11 @@ export const ChitValueBanner = () => {
     });
   };
 
-  const withdrawRequest = async (amount) => {
+  const withdrawRequest = (group) => {
+    const amount = group.chitValue;
     setConfirm({
       title: 'Withdraw Request',
-      message: `Withdraw your join request for ₹${Number(amount).toLocaleString()}? You can submit a new request later.`,
+      message: `Withdraw your join request for ₹${amount.toLocaleString()}? You can resubmit later.`,
       confirmLabel: 'Withdraw',
       variant: 'warning',
       onConfirm: async () => {
@@ -98,8 +87,8 @@ export const ChitValueBanner = () => {
           });
           const data = await res.json();
           if (data.success) {
-            toast.success(data.message || 'Request withdrawn successfully.');
-            setMyRequests(prev => prev.filter(a => a !== amount));
+            toast.success(data.message || 'Request withdrawn.');
+            setPendingAmounts(prev => prev.filter(a => a !== amount));
           } else {
             toast.error(data.message || 'Failed to withdraw request.');
           }
@@ -110,105 +99,97 @@ export const ChitValueBanner = () => {
     });
   };
 
-  const handleCustomRequest = () => {
-    const amount = Number(customAmountStr);
-    if (!amount || amount < 10000) {
-      toast.error('Please enter a valid amount of ₹10,000 or more.');
-      return;
-    }
-    requestToJoin(amount);
-  };
-
-  if (filteredChits.length === 0) return null;
+  if (bannerGroups.length === 0) return null;
 
   return (
     <>
-      <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
-          <div>
-            <h3 className="text-[14px] font-semibold text-gray-900">Available to Join</h3>
-            <p className="text-[12px] text-gray-400 mt-0.5">Upcoming chit groups open for new members</p>
-          </div>
-        </div>
+      <div className="space-y-3">
+        {bannerGroups.map((group) => {
+          const isPending = pendingAmounts.includes(group.chitValue);
+          const slotsRemaining = Math.max(0, group.tenure - (group.members?.length || 0));
+          const startLabel = new Date(group.startMonth).toLocaleDateString('en-IN', {
+            month: 'long',
+            year: 'numeric',
+          });
 
-        <div className="flex gap-3 overflow-x-auto px-5 py-4 scrollbar-none">
-          {filteredChits.map((item, index) => {
-            const requested = myRequests.includes(item.chitValue);
-            return (
-              <div
-                key={index}
-                className="shrink-0 w-44 bg-gray-50 border border-gray-200/80 rounded-xl px-4 py-3.5 flex flex-col gap-3"
-              >
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Chit Value</p>
-                  <p className="text-[18px] font-bold text-gray-900 tabular-nums">₹{item.chitValue.toLocaleString()}</p>
-                </div>
-                <div className="space-y-1 text-[12px] text-gray-500">
-                  <p>{item.tenure} months · {item.startMonth}</p>
-                </div>
-                {requested ? (
-                  <div className="space-y-1.5">
-                    <div className="w-full py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-semibold rounded-md text-center">
-                      Request Sent
-                    </div>
-                    <button
-                      onClick={() => withdrawRequest(item.chitValue)}
-                      className="w-full py-1.5 bg-white border border-red-200 text-red-600 text-[12px] font-semibold rounded-md hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <X size={11} />
-                      Withdraw
-                    </button>
+          return (
+            <div
+              key={group._id}
+              className="relative overflow-hidden rounded-2xl border border-indigo-500/20"
+              style={{
+                background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 45%, #3730a3 100%)',
+              }}
+            >
+              {/* Decorative blobs */}
+              <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/5 blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-indigo-400/10 blur-2xl pointer-events-none" />
+
+              <div className="relative px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-5">
+                {/* Left: content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-indigo-300">
+                      <Sparkles size={10} />
+                      Promotional Offer
+                    </span>
+                    {slotsRemaining > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full">
+                        <Users size={9} />
+                        {slotsRemaining} slot{slotsRemaining !== 1 ? 's' : ''} left
+                      </span>
+                    )}
+                    {slotsRemaining === 0 && (
+                      <span className="text-[10px] font-bold text-red-300 bg-red-400/10 border border-red-400/20 px-2 py-0.5 rounded-full">
+                        Full
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <button
-                    onClick={() => requestToJoin(item.chitValue)}
-                    className="w-full py-1.5 bg-indigo-600 text-white text-[12px] font-semibold rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1"
-                  >
-                    <Plus size={11} />
-                    Request to Join
-                  </button>
-                )}
-              </div>
-            );
-          })}
 
-          {/* Custom amount card */}
-          <div className="shrink-0 w-52 bg-gray-50 border border-gray-200/80 border-dashed rounded-xl px-4 py-3.5 flex flex-col gap-3">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Custom Amount</p>
-              <p className="text-[13px] text-gray-500">Request any chit value</p>
-            </div>
-            <input
-              type="number"
-              placeholder="e.g. 600000"
-              value={customAmountStr}
-              onChange={e => { setCustomAmountStr(e.target.value); setCustomAmount(Number(e.target.value)); }}
-              className="px-3 py-2 text-[13px] border border-gray-200 rounded-lg bg-white text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-            {myRequests.includes(customAmount) ? (
-              <div className="space-y-1.5">
-                <div className="w-full py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-semibold rounded-md text-center">
-                  Request Sent
+                  <p className="text-[28px] font-black text-white tracking-tight leading-none tabular-nums">
+                    ₹{group.chitValue.toLocaleString()}
+                  </p>
+
+                  {group.bannerTagline ? (
+                    <p className="text-[13px] text-indigo-200 mt-1.5 leading-snug">
+                      {group.bannerTagline}
+                    </p>
+                  ) : null}
+
+                  <p className="text-[12px] text-indigo-400 mt-1.5">
+                    {group.tenure} months · Starts {startLabel}
+                  </p>
                 </div>
-                <button
-                  onClick={() => withdrawRequest(customAmount)}
-                  className="w-full py-1.5 bg-white border border-red-200 text-red-600 text-[12px] font-semibold rounded-md hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
-                >
-                  <X size={11} />
-                  Withdraw
-                </button>
+
+                {/* Right: CTA */}
+                <div className="flex flex-col gap-2 shrink-0">
+                  {isPending ? (
+                    <>
+                      <div className="px-5 py-2.5 bg-emerald-400/20 border border-emerald-400/30 text-emerald-300 text-[13px] font-semibold rounded-xl text-center whitespace-nowrap">
+                        ✓ Request Pending
+                      </div>
+                      <button
+                        onClick={() => withdrawRequest(group)}
+                        className="flex items-center justify-center gap-1.5 px-5 py-2 bg-white/5 border border-white/10 text-red-300 text-[12px] font-semibold rounded-xl hover:bg-white/10 transition-colors whitespace-nowrap"
+                      >
+                        <X size={11} />
+                        Cancel Request
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => requestToJoin(group)}
+                      disabled={slotsRemaining === 0}
+                      className="flex items-center justify-center gap-2 px-6 py-2.5 bg-white text-indigo-900 text-[13px] font-bold rounded-xl hover:bg-indigo-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap shadow-[0_2px_12px_rgba(255,255,255,0.15)]"
+                    >
+                      Request to Join
+                      <ArrowRight size={13} />
+                    </button>
+                  )}
+                </div>
               </div>
-            ) : (
-              <button
-                onClick={handleCustomRequest}
-                className="w-full py-1.5 bg-indigo-600 text-white text-[12px] font-semibold rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <ArrowRight size={11} />
-                Request Amount
-              </button>
-            )}
-          </div>
-        </div>
+            </div>
+          );
+        })}
       </div>
 
       <ConfirmDialog
