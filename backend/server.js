@@ -75,7 +75,8 @@ app.use('/request', requestRoute);
 app.use('/payment', PaymentRouter);
 
 const PORT = process.env.PORT || 3000;
+const HOST = 'localhost';
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on ${HOST}:${PORT}`);
 });
