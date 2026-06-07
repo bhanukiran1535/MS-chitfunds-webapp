@@ -269,7 +269,7 @@ export const GroupMonthDetails = ({ adminMode: propAdminMode, userId: propUserId
     <div className="min-h-screen" style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#f7f8fa' }}>
       {/* Header */}
       <header className="bg-white border-b border-gray-200/80 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-7 h-14 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-7 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => nav(-1)}
@@ -301,7 +301,7 @@ export const GroupMonthDetails = ({ adminMode: propAdminMode, userId: propUserId
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-7 py-8 space-y-7 pb-20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-7 py-6 sm:py-8 space-y-6 sm:space-y-7 pb-24 md:pb-20">
         {/* Progress card */}
         <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] px-6 py-5">
           <div className="flex items-center justify-between mb-4">
@@ -330,111 +330,201 @@ export const GroupMonthDetails = ({ adminMode: propAdminMode, userId: propUserId
             <p className="text-[12px] text-gray-400 mt-0.5">Monthly breakdown — all {totalMonths} months</p>
           </div>
 
-          <div
-            className="grid px-5 py-2.5 bg-gray-50/70 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider"
-            style={{ gridTemplateColumns: '2.5rem 1fr 8rem 8rem 10rem 10rem' }}
-          >
-            <span>#</span>
-            <span>Month</span>
-            <span>Status</span>
-            <span>Amount</span>
-            <span>Payment Info</span>
-            <span className="text-right">Action</span>
+          {/* ── Mobile card list ────────────────────────────────── */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {months.map((m, i) => {
+              const amount = calculateAmount(m.monthName, split, hasPreBookedMonth);
+              const isMyPrebookedMonth = hasPreBookedMonth === m.monthName;
+              const canPrebook = m.status === 'upcoming' && !hasPreBookedMonth && adminMode === false;
+              const prebookStatus = prebookStatuses[m.monthName];
+              const canPay = m.status === 'due' || m.status === 'pending';
+              const payoutAmount = isMyPrebookedMonth ? (shareAmount * 0.97) : null;
+              const st = STATUS_CONFIG[m.status] || STATUS_CONFIG.upcoming;
+              const rowBg = isMyPrebookedMonth
+                ? 'border-l-[3px] border-l-amber-400 bg-amber-50/30'
+                : (m.status === 'due' ? 'border-l-[3px] border-l-red-400 bg-red-50/20' : 'border-l-[3px] border-l-transparent');
+
+              return (
+                <div key={i} className={`px-4 py-3.5 ${rowBg}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <span className="text-[12px] text-gray-400 tabular-nums shrink-0 pt-0.5 w-5">{i + 1}</span>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-800 text-[14px] leading-snug">{m.monthName}</p>
+                        {isMyPrebookedMonth && (
+                          <p className="text-[11px] text-amber-600 font-semibold mt-0.5">⭐ Your payout — ₹{payoutAmount?.toLocaleString()}</p>
+                        )}
+                        {(m.paymentDate || m.paymentMethod) && (
+                          <p className="text-[11px] text-gray-400 mt-0.5">
+                            {m.paymentDate && `Paid ${new Date(m.paymentDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`}
+                            {m.paymentMethod && ` · ${m.paymentMethod}`}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className="font-bold text-gray-900 tabular-nums text-[15px]">₹{Math.round(amount).toLocaleString()}</span>
+                      <span className={`inline-flex items-center gap-1 font-semibold text-[11px] ${st.text}`}>
+                        <span className={`w-[5px] h-[5px] rounded-full shrink-0 ${st.dot}`} />
+                        {isMyPrebookedMonth ? 'Winner' : st.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  {(canPay || (canPrebook && !prebookStatus) || (m.paymentMethod === 'cash' && m.status === 'pending' && !adminMode && !cashRequests[m.monthName])) && (
+                    <div className="flex items-center gap-2 mt-3 ml-7">
+                      {canPay && (
+                        <button
+                          onClick={() => handlePayNow(m)}
+                          disabled={loading}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white text-[12px] font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60 min-h-[40px]"
+                        >
+                          <CreditCard size={12} />
+                          Pay Now
+                        </button>
+                      )}
+                      {canPrebook && (
+                        prebookStatus ? (
+                          <span className={`text-[11px] font-semibold ${
+                            prebookStatus === 'pending' ? 'text-amber-600' :
+                            prebookStatus === 'approved' ? 'text-emerald-600' : 'text-red-500'
+                          }`}>
+                            {prebookStatus === 'pending' ? 'Request Sent' : prebookStatus === 'approved' ? 'Approved' : 'Rejected'}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handlePreBook(m.monthName)}
+                            disabled={loading}
+                            className="px-3 py-2 bg-white border border-gray-200 text-gray-700 text-[12px] font-semibold rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-60 min-h-[40px]"
+                          >
+                            Pre-book
+                          </button>
+                        )
+                      )}
+                      {m.paymentMethod === 'cash' && m.status === 'pending' && !adminMode && (
+                        cashRequests[m.monthName] === 'pending' ? (
+                          <span className="text-[11px] font-semibold text-amber-600">Confirmation Pending</span>
+                        ) : cashRequests[m.monthName] === 'approved' ? (
+                          <span className="text-[11px] font-semibold text-emerald-600">Cash Confirmed</span>
+                        ) : (
+                          <button
+                            onClick={() => handleCashConfirmRequest(m)}
+                            disabled={loading}
+                            className="px-3 py-2 text-[12px] font-semibold bg-amber-50 border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-60 min-h-[40px]"
+                          >
+                            Confirm Cash
+                          </button>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {months.map((m, i) => {
-            const amount = calculateAmount(m.monthName, split, hasPreBookedMonth);
-            const isMyPrebookedMonth = hasPreBookedMonth === m.monthName;
-            const canPrebook = m.status === 'upcoming' && !hasPreBookedMonth && adminMode === false;
-            const prebookStatus = prebookStatuses[m.monthName];
-            const canPay = m.status === 'due' || m.status === 'pending';
-            const payoutAmount = isMyPrebookedMonth ? (shareAmount * 0.97) : null;
-            const st = STATUS_CONFIG[m.status] || STATUS_CONFIG.upcoming;
+          {/* ── Desktop grid ─────────────────────────────────────── */}
+          <div className="hidden md:block">
+            <div
+              className="grid px-5 py-2.5 bg-gray-50/70 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider"
+              style={{ gridTemplateColumns: '2.5rem 1fr 8rem 8rem 10rem 10rem' }}
+            >
+              <span>#</span>
+              <span>Month</span>
+              <span>Status</span>
+              <span>Amount</span>
+              <span>Payment Info</span>
+              <span className="text-right">Action</span>
+            </div>
 
-            const rowBorder = isMyPrebookedMonth
-              ? 'border-l-[3px] border-l-amber-400 bg-amber-50/40'
-              : (m.status === 'due' ? 'border-l-[3px] border-l-red-400 bg-red-50/30' : 'border-l-[3px] border-l-transparent');
+            {months.map((m, i) => {
+              const amount = calculateAmount(m.monthName, split, hasPreBookedMonth);
+              const isMyPrebookedMonth = hasPreBookedMonth === m.monthName;
+              const canPrebook = m.status === 'upcoming' && !hasPreBookedMonth && adminMode === false;
+              const prebookStatus = prebookStatuses[m.monthName];
+              const canPay = m.status === 'due' || m.status === 'pending';
+              const payoutAmount = isMyPrebookedMonth ? (shareAmount * 0.97) : null;
+              const st = STATUS_CONFIG[m.status] || STATUS_CONFIG.upcoming;
+              const rowBorder = isMyPrebookedMonth
+                ? 'border-l-[3px] border-l-amber-400 bg-amber-50/40'
+                : (m.status === 'due' ? 'border-l-[3px] border-l-red-400 bg-red-50/30' : 'border-l-[3px] border-l-transparent');
 
-            return (
-              <div
-                key={i}
-                className={`grid px-5 py-3.5 border-b border-gray-100 last:border-b-0 items-center hover:bg-gray-50/40 transition-colors text-[13px] ${rowBorder}`}
-                style={{ gridTemplateColumns: '2.5rem 1fr 8rem 8rem 10rem 10rem' }}
-              >
-                <span className="text-[12px] text-gray-400 tabular-nums">{i + 1}</span>
-
-                <div>
-                  <p className="font-semibold text-gray-800">{m.monthName}</p>
-                  {isMyPrebookedMonth && (
-                    <p className="text-[11px] text-amber-600 font-semibold mt-0.5">⭐ Your payout — ₹{payoutAmount?.toLocaleString()}</p>
-                  )}
-                </div>
-
-                <span className={`inline-flex items-center gap-1.5 font-semibold text-[12px] ${st.text}`}>
-                  <span className={`w-[6px] h-[6px] rounded-full shrink-0 ${st.dot}`} />
-                  {isMyPrebookedMonth ? 'Winner' : st.label}
-                </span>
-
-                <span className="font-semibold text-gray-900 tabular-nums">₹{Math.round(amount).toLocaleString()}</span>
-
-                <div className="text-[12px] text-gray-500 space-y-0.5">
-                  {m.paymentDate && <p>Paid {new Date(m.paymentDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
-                  {m.paymentMethod && <p className="capitalize">{m.paymentMethod}</p>}
-                  {m.prebookedBy && <p className="text-purple-600">Booked by {m.prebookedBy}</p>}
-                  {!m.paymentDate && !m.paymentMethod && !m.prebookedBy && <span className="text-gray-300">—</span>}
-                </div>
-
-                <div className="flex items-center justify-end gap-2">
-                  {canPay && (
-                    <button
-                      onClick={() => handlePayNow(m)}
-                      disabled={loading}
-                      className="flex items-center gap-1 px-2.5 py-1 bg-indigo-600 text-white text-[12px] font-semibold rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-60"
-                    >
-                      <CreditCard size={11} />
-                      Pay Now
-                    </button>
-                  )}
-                  {canPrebook && (
-                    prebookStatus ? (
-                      <span className={`text-[11px] font-semibold ${
-                        prebookStatus === 'pending' ? 'text-amber-600' :
-                        prebookStatus === 'approved' ? 'text-emerald-600' : 'text-red-500'
-                      }`}>
-                        {prebookStatus === 'pending' && 'Request Sent'}
-                        {prebookStatus === 'approved' && 'Approved'}
-                        {prebookStatus === 'rejected' && 'Rejected'}
-                        {prebookStatus === 'failed' && 'Failed'}
-                      </span>
-                    ) : (
+              return (
+                <div
+                  key={i}
+                  className={`grid px-5 py-3.5 border-b border-gray-100 last:border-b-0 items-center hover:bg-gray-50/40 transition-colors text-[13px] ${rowBorder}`}
+                  style={{ gridTemplateColumns: '2.5rem 1fr 8rem 8rem 10rem 10rem' }}
+                >
+                  <span className="text-[12px] text-gray-400 tabular-nums">{i + 1}</span>
+                  <div>
+                    <p className="font-semibold text-gray-800">{m.monthName}</p>
+                    {isMyPrebookedMonth && (
+                      <p className="text-[11px] text-amber-600 font-semibold mt-0.5">⭐ Your payout — ₹{payoutAmount?.toLocaleString()}</p>
+                    )}
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 font-semibold text-[12px] ${st.text}`}>
+                    <span className={`w-[6px] h-[6px] rounded-full shrink-0 ${st.dot}`} />
+                    {isMyPrebookedMonth ? 'Winner' : st.label}
+                  </span>
+                  <span className="font-semibold text-gray-900 tabular-nums">₹{Math.round(amount).toLocaleString()}</span>
+                  <div className="text-[12px] text-gray-500 space-y-0.5">
+                    {m.paymentDate && <p>Paid {new Date(m.paymentDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
+                    {m.paymentMethod && <p className="capitalize">{m.paymentMethod}</p>}
+                    {m.prebookedBy && <p className="text-purple-600">Booked by {m.prebookedBy}</p>}
+                    {!m.paymentDate && !m.paymentMethod && !m.prebookedBy && <span className="text-gray-300">—</span>}
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    {canPay && (
                       <button
-                        onClick={() => handlePreBook(m.monthName)}
+                        onClick={() => handlePayNow(m)}
                         disabled={loading}
-                        className="px-2.5 py-1 bg-white border border-gray-200 text-gray-700 text-[12px] font-semibold rounded-md hover:bg-gray-50 transition-colors disabled:opacity-60"
+                        className="flex items-center gap-1 px-2.5 py-1 bg-indigo-600 text-white text-[12px] font-semibold rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-60"
                       >
-                        Pre-book
+                        <CreditCard size={11} />
+                        Pay Now
                       </button>
-                    )
-                  )}
-                  {m.paymentMethod === 'cash' && m.status === 'pending' && !adminMode && (
-                    cashRequests[m.monthName] === 'pending' ? (
-                      <span className="text-[11px] font-semibold text-amber-600">Confirmation Pending</span>
-                    ) : cashRequests[m.monthName] === 'approved' ? (
-                      <span className="text-[11px] font-semibold text-emerald-600">Cash Confirmed</span>
-                    ) : (
-                      <button
-                        onClick={() => handleCashConfirmRequest(m)}
-                        disabled={loading}
-                        className="px-2.5 py-1 text-[12px] font-semibold bg-amber-50 border border-amber-200 text-amber-700 rounded-md hover:bg-amber-100 transition-colors disabled:opacity-60"
-                      >
-                        Confirm Cash
-                      </button>
-                    )
-                  )}
+                    )}
+                    {canPrebook && (
+                      prebookStatus ? (
+                        <span className={`text-[11px] font-semibold ${
+                          prebookStatus === 'pending' ? 'text-amber-600' :
+                          prebookStatus === 'approved' ? 'text-emerald-600' : 'text-red-500'
+                        }`}>
+                          {prebookStatus === 'pending' && 'Request Sent'}
+                          {prebookStatus === 'approved' && 'Approved'}
+                          {prebookStatus === 'rejected' && 'Rejected'}
+                          {prebookStatus === 'failed' && 'Failed'}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handlePreBook(m.monthName)}
+                          disabled={loading}
+                          className="px-2.5 py-1 bg-white border border-gray-200 text-gray-700 text-[12px] font-semibold rounded-md hover:bg-gray-50 transition-colors disabled:opacity-60"
+                        >
+                          Pre-book
+                        </button>
+                      )
+                    )}
+                    {m.paymentMethod === 'cash' && m.status === 'pending' && !adminMode && (
+                      cashRequests[m.monthName] === 'pending' ? (
+                        <span className="text-[11px] font-semibold text-amber-600">Confirmation Pending</span>
+                      ) : cashRequests[m.monthName] === 'approved' ? (
+                        <span className="text-[11px] font-semibold text-emerald-600">Cash Confirmed</span>
+                      ) : (
+                        <button
+                          onClick={() => handleCashConfirmRequest(m)}
+                          disabled={loading}
+                          className="px-2.5 py-1 text-[12px] font-semibold bg-amber-50 border border-amber-200 text-amber-700 rounded-md hover:bg-amber-100 transition-colors disabled:opacity-60"
+                        >
+                          Confirm Cash
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         {/* Leave group */}

@@ -281,7 +281,7 @@ export const UserDashboard = ({ user }) => {
                   <p className="text-[14px]">No groups yet. Request to join a group from the banner above.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {mergedGroups.map((group) => (
                     <GroupCard key={group._id} group={group} />
                   ))}
