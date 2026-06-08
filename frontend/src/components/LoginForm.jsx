@@ -129,12 +129,11 @@ export const LoginForm = ({ onLogin }) => {
         setEmail('');
         setPassword('');
       } else {
-        // Pass user data to parent (likely App.jsx or AuthProvider)
+        // Pass the full user profile into parent auth state so the name renders immediately
         onLogin({
-          id: data.user._id,
-          email: data.user.email,
-          isAdmin: data.user.isAdmin,
-          token: data.token
+          ...data.user,
+          id: data.user.id || data.user._id,
+          token: data.token,
         });
       }
 
